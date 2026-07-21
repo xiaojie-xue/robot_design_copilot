@@ -1,0 +1,17 @@
+[package]
+name = "robot-engine-client"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Lifecycle owner for the Robot Design Copilot C++ sidecar"
+
+[dependencies]
+serde_json = "1"
+
+[features]
+real-engine-tests = []
+
+[[test]]
+name = "real_engine"
+path = "tests/real_engine.rs"
+required-features = ["real-engine-tests"]
