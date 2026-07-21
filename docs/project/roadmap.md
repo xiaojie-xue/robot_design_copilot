@@ -17,7 +17,7 @@ Robot Design Copilot is developed as testable vertical slices. Each milestone mu
 
 | Milestone | Outcome | Required gate | Status |
 | --- | --- | --- | --- |
-| [M0](milestones/M0-architecture-baseline.md) | Cross-platform architecture baseline and minimal C++ engine path | [G0](gates/G0-platform-feasibility.md) | Planned |
+| [M0](milestones/M0-architecture-baseline.md) | Cross-platform architecture baseline and minimal C++ engine path | [G0](gates/G0-platform-feasibility.md) | In progress |
 | [M1](milestones/M1-desktop-foundation.md) | Desktop project lifecycle and local persistence | — | Planned |
 | [M2](milestones/M2-design-spec-v1.md) | Versioned `DesignSpec v1` contract | [G1](gates/G1-design-contract.md) | Planned |
 | [M3](milestones/M3-engineering-core.md) | Verified deterministic engineering core | [G2](gates/G2-engineering-trust.md) | Planned |
@@ -38,3 +38,6 @@ M0–M8 support one target: a parametric seven-axis robot arm. The MVP excludes 
 3. Validate engineering calculations before using them for recommendations.
 4. Require user approval for every AI-generated specification change.
 5. Use one reference seven-axis arm project for every milestone demonstration.
+
+The implementation sequence and current work breakdown are maintained in the
+[development plan](development-plan.md).

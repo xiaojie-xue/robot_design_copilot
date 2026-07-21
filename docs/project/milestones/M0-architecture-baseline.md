@@ -1,6 +1,6 @@
 # M0 — Architecture Baseline
 
-Status: Planned  
+Status: In progress
 Required gate: [G0 — Platform Feasibility](../gates/G0-platform-feasibility.md)
 
 ## Outcome
