@@ -47,8 +47,8 @@ The language model handles requirement capture, follow-up questions, and explana
 | --- | --- |
 | Desktop | Tauri 2 / Rust |
 | UI and 3D | React, TypeScript, Three.js |
-| Engineering core | Python, Pinocchio, NumPy, SciPy |
-| Local API and schemas | FastAPI, Pydantic |
+| Engineering core | C++20, Pinocchio, Eigen, Ceres |
+| Local API and schemas | Versioned JSON over framed IPC |
 | CAD and simulation | CadQuery, MuJoCo |
 | Storage | SQLite |
 
@@ -72,6 +72,67 @@ Robot Design Copilot is an engineering assistance tool, not a certification auth
 ## Development roadmap
 
 See the [project roadmap](docs/project/roadmap.md), [architecture overview](docs/architecture/overview.md), and [gate reviews](docs/project/gates/README.md).
+
+Development has started with the M0 platform baseline. The current sidecar
+implements bounded IPC framing, protocol-v1 validation, structured errors, and
+an `engine.health` request. See the
+[development plan](docs/project/development-plan.md) for delivery order and the
+current work breakdown. The first C++ engine slice uses CMake 3.24+ and a
+C++20 compiler:
+
+```shell
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+To keep every local test artifact inside this repository, use:
+
+```shell
+bash scripts/test-engine.sh
+```
+
+The script configures `build/core`, reuses the repository-local Conan toolchain
+when available, runs the unit binaries directly, performs a
+real framed sidecar health exchange, and checks the committed protocol JSON.
+
+The robotics dependency set is installed into a repository-local Conan home:
+
+```shell
+bash scripts/setup-cpp-deps.sh
+```
+
+It pins Pinocchio 3.8.0, Ceres Solver 2.2.0, Eigen 3.4.1, and nlohmann/json
+3.12.0. No Conan package cache or test artifact is written outside `build/`.
+
+After dependency setup, build and test the first seven-axis Pinocchio slice:
+
+```shell
+bash scripts/test-robotics.sh
+```
+
+This repository-local test builds `build/robotics`, verifies the reference-arm
+forward kinematics analytically, checks invalid protocol parameters, and runs
+real framed `engine.health` and `kinematics.forward` exchanges through the
+sidecar. The reference model is an M0 integration fixture, not a production
+robot design.
+
+The Rust toolchain, Cargo cache, temporary files, and test output can also be
+kept inside this repository:
+
+```shell
+bash scripts/setup-rust.sh
+bash scripts/test-rust-client.sh
+```
+
+The setup uses USTC mirrors by default for both rustup downloads and Cargo's
+sparse registry. An existing repository-local toolchain is reused only when it
+matches the pinned Rust version. To use the Tsinghua TUNA rustup mirror for one
+setup run, set
+`RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup` and
+`RUSTUP_UPDATE_ROOT=https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup`.
+Cargo's repository-level mirror is configured in `.cargo/config.toml`. All Rust
+state and generated files remain under `build/`.
 
 ## Contributing
 
