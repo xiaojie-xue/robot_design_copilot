@@ -1,0 +1,9 @@
+{
+  "protocol_version": 1,
+  "type": "request",
+  "request_id": "fk-zero",
+  "method": "kinematics.forward",
+  "params": {
+    "joint_positions_rad": [0, 0, 0, 0, 0, 0, 0]
+  }
+}

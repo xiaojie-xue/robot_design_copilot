@@ -1,0 +1,14 @@
+# Build output
+build/
+CMakeUserPresets.json
+out/
+cmake-build-*/
+
+# IDE and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Local logs and temporary files
+*.log
+*.tmp

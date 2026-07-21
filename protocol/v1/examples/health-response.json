@@ -1,0 +1,16 @@
+{
+  "protocol_version": 1,
+  "type": "response",
+  "request_id": "health-1",
+  "engine_version": "0.1.0",
+  "result": {
+    "status": "ok",
+    "protocol_version": 1,
+    "capabilities": ["engine.health"],
+    "dependencies": {
+      "eigen": "3.4.1",
+      "nlohmann_json": "3.12.0"
+    },
+    "dependency_smoke_check": true
+  }
+}

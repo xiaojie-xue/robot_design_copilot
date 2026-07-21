@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-design-copilot.dev/protocol/v1/envelope.schema.json",
+  "title": "Robot Engine Protocol v1 Envelope",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/cancel" },
+    { "$ref": "#/$defs/progress" },
+    { "$ref": "#/$defs/response" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["protocol_version", "type", "request_id"],
+      "properties": {
+        "protocol_version": { "const": 1 },
+        "type": { "type": "string" },
+        "request_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/correlation_id" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "request": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["method", "params"],
+          "properties": {
+            "type": { "const": "request" },
+            "request_id": { "$ref": "#/$defs/correlation_id" },
+            "method": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[a-z][a-z0-9._-]*$"
+            },
+            "params": { "type": "object" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "cancel": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "cancel" },
+            "request_id": { "$ref": "#/$defs/correlation_id" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "progress": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["progress"],
+          "properties": {
+            "type": { "const": "progress" },
+            "request_id": { "$ref": "#/$defs/correlation_id" },
+            "progress": {
+              "type": "object",
+              "required": ["fraction", "stage"],
+              "properties": {
+                "fraction": { "type": "number", "minimum": 0, "maximum": 1 },
+                "stage": { "type": "string", "minLength": 1 },
+                "message": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "response": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["engine_version", "result"],
+          "properties": {
+            "type": { "const": "response" },
+            "request_id": { "$ref": "#/$defs/correlation_id" },
+            "engine_version": { "type": "string", "minLength": 1 },
+            "result": {}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "error_detail": {
+      "type": "object",
+      "required": ["code", "message", "retryable"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "retryable": { "type": "boolean" },
+        "details": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["engine_version", "error"],
+          "properties": {
+            "type": { "const": "error" },
+            "engine_version": { "type": "string", "minLength": 1 },
+            "error": { "$ref": "#/$defs/error_detail" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

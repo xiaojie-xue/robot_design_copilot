@@ -1,0 +1,57 @@
+# Engine Protocol v1
+
+Protocol v1 carries UTF-8 JSON messages between the Rust application process
+and the C++ engine sidecar.
+
+## Framing
+
+Each message is encoded as:
+
+1. A four-byte unsigned payload length in network byte order (big endian).
+2. Exactly that many bytes of UTF-8 JSON.
+
+The default maximum payload is 16 MiB. A zero-length message, truncated header,
+truncated payload, oversized payload, invalid UTF-8, or invalid JSON is a
+protocol error. The first four conditions are enforced by the C++ transport
+layer; UTF-8, JSON, and envelope validation belong to the semantic layer.
+
+Standard output is reserved for framed messages. Human-readable and structured
+diagnostic logs go to standard error.
+
+## Envelopes
+
+[`envelope.schema.json`](envelope.schema.json) defines requests, cancellations,
+progress, successful responses, and errors. Every message declares
+`protocol_version: 1`. Correlated messages carry the same non-empty
+`request_id`. An error caused before a valid request ID can be read uses a null
+`request_id` and cannot be matched to an in-flight request.
+
+Request IDs are 1-128 byte ASCII identifiers matching
+`[A-Za-z0-9][A-Za-z0-9._:-]*`. Method names are lowercase ASCII identifiers up
+to 128 bytes, such as `engine.health`. Unknown envelope fields are rejected so
+schema drift is visible instead of silently ignored.
+
+Cancellation is best-effort. A request completes with either a response or an
+error; progress events do not complete it. Unsupported protocol versions and
+methods produce structured errors rather than terminating the sidecar.
+
+`robot-engine-cli` currently implements semantic validation, structured errors,
+request correlation, protocol-version enforcement, and `engine.health`.
+Robotics-enabled builds also expose `kinematics.forward` with the following
+method-specific contract:
+
+- `params.joint_positions_rad` is an array of exactly seven finite numbers.
+- The input unit is radians and values are ordered from `joint_1` to `joint_7`.
+- The response reports `base` to `tool0` translation in metres and orientation
+  as a quaternion in explicit `[x, y, z, w]` order.
+- Invalid method parameters return the stable `invalid_params` error code.
+
+The M0 reference model uses alternating Z/Y revolute axes. At zero position,
+`base_T_tool0` has translation `[1.26, 0.0, 0.54]` metres and identity
+orientation. It is a deterministic integration and validation fixture rather
+than a production arm definition. See the committed `forward-request.json` and
+`forward-response.json` examples.
+
+`robot-engine-transport-echo` remains a framing-only diagnostic executable.
+Progress, cancellation, and additional engineering methods are subsequent M0
+work.

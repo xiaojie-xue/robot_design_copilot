@@ -1,0 +1,14 @@
+{
+  "protocol_version": 1,
+  "type": "response",
+  "request_id": "fk-zero",
+  "engine_version": "0.1.0",
+  "result": {
+    "model_id": "reference_arm_7dof_v1",
+    "base_frame": "base",
+    "tool_frame": "tool0",
+    "joint_count": 7,
+    "translation_m": [1.26, 0.0, 0.54],
+    "orientation_xyzw": [0.0, 0.0, 0.0, 1.0]
+  }
+}
