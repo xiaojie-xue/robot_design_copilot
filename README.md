@@ -41,20 +41,6 @@ The language model handles requirement capture, follow-up questions, and explana
 5. Compare components, designs, and existing robots.
 6. Preview in 3D and export the result.
 
-## Architecture
-
-```mermaid
-flowchart LR
-    UI["Desktop UI"] --> Agent["Requirement copilot"]
-    Agent --> Spec["DesignSpec"]
-    Spec --> Engine["Design and validation engine"]
-    Engine --> Catalog["Component and robot catalogs"]
-    Engine --> Result["Candidates and reports"]
-    Result --> Preview["3D preview"]
-    Result --> Export["URDF / MJCF / STEP / BOM"]
-    LLM["DeepSeek or user model"] --> Agent
-```
-
 ## Proposed stack
 
 | Layer | Technology |
@@ -83,6 +69,10 @@ DeepSeek will be the default provider preset. Users will supply their own key or
 
 Robot Design Copilot is an engineering assistance tool, not a certification authority. Designs must be reviewed by qualified engineers before procurement, manufacturing, or operation.
 
+## Development roadmap
+
+See the [project roadmap](docs/project/roadmap.md), [architecture overview](docs/architecture/overview.md), and [gate reviews](docs/project/gates/README.md).
+
 ## Contributing
 
 The project is at an early stage. Contributions to schemas, verified calculations, component data, robotics algorithms, 3D visualization, cross-platform packaging, and documentation are welcome.
@@ -90,4 +80,3 @@ The project is at an early stage. Contributions to schemas, verified calculation
 ## License
 
 Licensed under the [Apache License 2.0](LICENSE).
-
