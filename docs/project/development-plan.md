@@ -1,161 +1,169 @@
 # Development Plan
 
-This plan converts the product roadmap into an implementation sequence. The
-milestone documents define stable scope and acceptance criteria; this document
-defines the delivery order, dependencies, and near-term work.
+This plan implements the [project roadmap](roadmap.md). M0 remains the original
+architecture baseline. G0 now closes when the architecture, dependency set,
+sidecar boundary, lifecycle approach, and three-platform build direction are
+accepted. The minimum engineering calculation starts at M1.
 
 ## Delivery principles
 
 1. Deliver runnable vertical slices and keep `main` buildable.
-2. Treat gate evidence as a product artifact, not as work added after a
-   milestone.
-3. Keep the TypeScript, Rust, and C++ boundaries defined in ADR-0001.
-4. Keep engineering algorithms in C++ and require independent validation before
-   their results can drive recommendations.
-5. Keep accepted requirements in versioned `DesignSpec` revisions. AI can only
-   propose reviewable patches.
+2. Keep the TypeScript, Rust, and C++ boundaries defined in ADR-0001.
+3. Keep engineering algorithms in C++ and expose them through a versioned,
+   automation-friendly interface.
+4. Treat units, frames, assumptions, solver status, and validation evidence as
+   part of every result.
+5. Require independent checks before results drive component selection or AI
+   explanations.
+6. Keep AI changes reviewable and keep 3D derived from engine-owned state.
+7. Finish installers and full desktop product E2E in M5, not G0.
 
 ## Milestone sequence
 
-| Phase | Milestones | Primary result | Starts when | Exit evidence |
+| Phase | Milestone | Primary result | Starts when | Exit evidence |
 | --- | --- | --- | --- | --- |
-| Platform proof | M0 | Packaged TypeScript-Rust-C++ path and isolated engine process | Immediately | G0 evidence on all three platforms |
-| Product foundation | M1-M2 | Durable projects and stable `DesignSpec v1` | G0 passes | Persistence tests and G1 |
-| Engineering proof | M3 | Validated seven-axis calculations | G1 passes | Golden/property tests and G2 |
-| Design workflow | M4-M5 | Comparable candidates and traceable component choices | G2 passes for recommendation inputs | Reproducible analyses and G3 |
-| Assisted workflow | M6-M7 | Reviewable AI refinement and traceable exports | Stable product data model | Provider safety and export round trips |
-| Beta | M8 | Installable cross-platform application | G0-G3 pass | G4 and post-install E2E |
+| Architecture baseline | M0 | Accepted TypeScript-Rust-C++ boundaries and viable platform strategy | Immediately | Narrowed G0 architecture/platform evidence |
+| Calculation proof | M1 | Workspace-to-link-length and joint-requirement executable | G0 passes | Feasible/infeasible fixtures, independent references, and G1 |
+| Functional workflow | M2 | Deterministic project, analysis, recommendation, and export workflow | G1 passes | Contract, engineering, recommendation, persistence, export evidence, and G2 |
+| AI assistance | M3 | Reviewable requirement patches and grounded explanations | G2 passes | Provider, approval, grounding, redaction evidence, and G3 |
+| 3D preview | M4 | Interactive views derived from engine model and results | G2 passes and model conventions are stable | Model/frame consistency and visual interaction tests |
+| Desktop product | M5 | Installable cross-platform application | M1-M4 are complete | Clean-system E2E and G4 |
 
-M1 planning may overlap late M0 work, but implementation that depends on an
-unproven packaging path must not move ahead of G0. M2 schema exploration may
-also start early, but the contract is not accepted until G1.
+M4 planning may overlap M3 because both consume stable M2 contracts, but M5 is
+the integration and release stage for the complete workflow.
 
-## M0 implementation plan
+## M0 — Existing architecture baseline
 
-M0 is split into small increments so failures are isolated and every increment
-has an automated check.
+M0 retains its original milestone scope and implementation. Current reusable
+evidence includes bounded IPC framing, protocol-v1 validation, structured
+errors, request progress and cancellation, C++ process sessions, the Rust
+lifecycle client, Pinocchio/Ceres/Eigen integration, forward kinematics, and the
+Tauri/React scaffold.
 
-### M0.1 — Repository and transport baseline (in progress)
+The revised G0 review concentrates on:
 
-- Establish CMake/C++20 targets and test layout.
-- Publish the protocol-v1 envelope schema and framing rules.
-- Implement bounded, length-prefixed frame I/O without JSON semantics.
-- Add framing tests for normal, multi-frame, truncated, empty, oversized, and
-  write-failure paths.
-- Add a transport echo executable for process/pipe smoke testing.
-- Add a three-platform CI compile-and-test matrix.
+- Accepted TypeScript, Rust, and C++ ownership boundaries
+- Selected native dependencies and recorded licenses
+- Versioned sidecar IPC and process isolation
+- Windows, macOS, and Linux toolchain and CI feasibility
+- Explicit ownership of remaining bundling and installer risks by M5
 
-Done when the C++ transport tests pass locally and in the CI matrix. This is a
-transport proof only; it is not the M0 end-to-end FK demonstration.
+G0 does not wait for signed or unsigned installers, complete native bundle
+inspection, clean-system install tests, or full desktop workflow E2E.
 
-Current evidence: the CMake build, framing tests, protocol tests, sanitizer
-build, and a real stdin/stdout health request pass on macOS. The CI matrix is
-defined for both the C++ transport and Rust lifecycle client but has not yet
-produced review evidence, so M0.1 remains in progress.
+## Immediate next plan: M1 minimum calculation proof
 
-### M0.2 — Engineering dependency spike
+M1 is one input, two connected calculations, and one structured result. It must
+be executable through a CLI or direct engine request without launching Tauri.
 
-- Pin Eigen, Pinocchio, Ceres, JSON, and test framework versions.
-- Prove clean builds on Windows, macOS, and Linux.
-- Record native dependency licenses and packaging behavior.
-- Add a minimal seven-axis reference model load.
+### M1.1 — Minimum input and result contract
 
-Done when dependency builds and artifact inspection pass on all target runners.
+- Define a versioned schema for workspace targets, orientation coverage, joint
+  limits, link-length bounds, payload, TCP velocity and acceleration limits,
+  mass properties, gravity, evaluation cases, transmissions, and safety factors.
+- Reuse repository SI-unit and coordinate-frame conventions.
+- Define success, infeasible, invalid-input, under-specified, and non-converged
+  states.
+- Include provenance, solver version, residuals, warnings, and validation status.
+- Commit feasible and infeasible reference inputs before tuning the solver.
 
-Current progress: Conan 2.30.0 resolves a locked graph containing Pinocchio
-3.8.0, Ceres 2.2.0, Eigen 3.4.1, and nlohmann/json 3.12.0 into the repository's
-`build/` directory. The robotics build links all four dependencies;
-`engine.health` reports their compiled versions and runs no-output Eigen/Ceres
-packaging checks. A deterministic seven-axis Pinocchio model and analytic local
-tests are implemented. Windows and Linux package/build evidence remains open,
-so M0.2 is not complete.
+Done when schema and fixture tests reject ambiguous units, missing required
+assumptions, invalid bounds, non-finite values, and inconsistent frames.
 
-### M0.3 — Engine protocol and process lifecycle
+### M1.2 — Workspace-driven link-length solver
 
-- Implement request dispatch, request IDs, structured errors, progress, and
-  protocol-version rejection in C++.
-- Implement Rust child-process startup, matching, timeout, cancellation, crash
-  detection, restart, and shutdown.
-- Verify stdout contains frames only and stderr contains logs only.
-- Add malformed-frame, timeout, cancellation, crash, and orphan-process tests.
+- Parameterize the seven-axis arm using a minimal set of link lengths while
+  keeping joint axes and limits explicit.
+- Convert workspace requirements into target samples with stable identifiers.
+- Use bounded deterministic optimization to propose link lengths.
+- Verify the candidate with FK/IK reachability rather than optimizer cost alone.
+- Report coverage, position/orientation residuals, active bounds, and unreachable
+  targets.
 
-Done when lifecycle and contract tests pass on all target runners.
+Done when the feasible fixture produces repeatable geometry that passes all
+required targets and the infeasible fixture returns an explicit infeasible
+result.
 
-Current progress: the C++ sidecar validates protocol-v1 request envelopes,
-correlates responses, rejects unsupported versions and unknown fields, returns
-structured errors, and implements `engine.health`. Its request session runs
-independent jobs concurrently, serializes complete stdout envelopes, rejects
-duplicate in-flight IDs, emits schema-valid progress, propagates cooperative
-stop tokens, completes cancelled work with `request_cancelled`, and joins all
-workers during shutdown. In-process tests cover out-of-order correlation,
-progress ordering, cancellation, duplicate IDs, invalid cancellation, and output
-failure. The Rust lifecycle client owns child startup, concurrent request
-matching, timeout-triggered cancellation, crash isolation, explicit restart,
-graceful/forced shutdown, bounded stderr capture, and strict inbound envelope
-validation. Pure protocol, C++ session, fake-process lifecycle, and real
-Rust-to-C++ integration tests are implemented. Cross-platform CI review evidence
-remains open.
+### M1.3 — Joint kinematic and dynamic requirements
 
-### M0.4 — Desktop FK slice and G0 review
+- Consume M1.2 geometry directly without manual re-entry.
+- Build a documented reference motion or conservative evaluation set from the
+  requested maximum TCP linear/angular velocity and acceleration.
+- Map TCP limits to joint velocity and acceleration and report singular or
+  ill-conditioned cases.
+- Compute gravity and inertial torque from declared payload and link mass
+  properties; retain the torque breakdown before safety factors.
+- Report per-joint peak velocity, acceleration, combined torque, mechanical
+  power, and optional motor-side requirements for declared transmissions.
+- Preserve the posture or trajectory sample responsible for every peak.
 
-- Scaffold the Tauri 2 and React application.
-- Enter seven joint positions in the UI and submit an FK request.
-- Compute the pose through Pinocchio and render the versioned result.
-- Bundle the engine and native libraries into unsigned artifacts.
-- Collect all evidence listed in G0 and conduct the gate review.
+Done when every per-joint result is traceable to geometry, declared assumptions,
+an evaluation case, and a checked dynamics calculation.
 
-Done when G0 passes; only then is M0 marked complete.
+### M1.4 — Independent validation and G1
 
-Current progress: the C++ sidecar accepts seven finite joint positions through
-`kinematics.forward`, computes `base_T_tool0` with Pinocchio, and returns metres
-plus an explicit xyzw quaternion. Committed fixtures, analytic zero/quarter-turn
-cases, invalid-parameter cases, and real framed process exchanges pass locally.
-The Tauri 2/React scaffold now provides seven validated joint inputs, engine
-health/restart controls, structured command errors, and versioned pose output.
-Tauri owns the Rust lifecycle client behind typed commands; the webview has no
-shell capability. The C++ executable can be staged with Tauri's target-triple
-sidecar filename, and frontend type checks, domain tests, and production builds
-run without starting that sidecar. Desktop compilation, end-to-end execution,
-native-library bundling, unsigned three-platform artifacts, and the complete G0
-evidence package remain open.
+- Add analytic checks for simplified poses and motions.
+- Compare the seven-axis result with an independent reference or second
+  implementation.
+- Add finite-difference and energy/power consistency checks where applicable.
+- Define numerical tolerances with engineering justification.
+- Run feasible and infeasible fixtures through one documented command.
+- Compare supported developer and CI platforms within approved tolerances.
 
-## Next milestones
+Done when all M1 completion criteria pass and G1 approves the result for use by
+M2.
 
-After G0, execute the remaining work in roadmap order:
+## Later milestones
 
-1. M1: project format, atomic save/recovery, SQLite migrations, settings,
-   keychain, diagnostics, and the base application layout.
-2. M2: `DesignSpec v1`, valid/invalid examples, generated boundary types,
-   revisions/diffs, unit/frame enforcement, and the parameter editor.
-3. M3: parametric arm, FK/Jacobian/IK/dynamics/collision, structured failures,
-   golden cases, properties, and platform comparisons.
-4. M4: candidate persistence, workspace jobs, stale-result propagation,
-   comparison, and a Three.js scene sharing engine frame conventions.
-5. M5: versioned catalogs, provenance, hard filtering, compatibility and margin
-   checks, explainable ranking, and a manually reviewed reference joint.
-6. M6: provider abstraction, streaming/cancellation, structured patches,
-   per-field approval, grounded explanations, permissions, and redaction.
-7. M7: versioned JSON/BOM/report/URDF/glTF exports, overwrite protection, and
-   import/round-trip validation.
-8. M8: installers, signing, update policy, sample project, diagnostics, SBOM,
-   offline workflow, and clean-system E2E.
+### M2 — Functional design workflow
+
+1. Promote the M1 contract into stable `DesignSpec`, `CandidateDesign`, and
+   `AnalysisResult` models with revisions and stale-result propagation.
+2. Add project persistence and candidate comparison through development entry
+   points.
+3. Extend FK, Jacobian, IK, workspace, singularity, collision, and trajectory
+   analysis with structured failures and validation.
+4. Add traceable component catalogs, hard filtering, compatibility, margins,
+   explainable ranking, and manual reference review.
+5. Add JSON, BOM, report, URDF, and glTF export with round-trip validation.
+
+### M3 — AI assistance
+
+1. Add DeepSeek, OpenAI-compatible, and Ollama provider adapters.
+2. Add streaming, cancellation, structured patches, per-field approval, and
+   mock-provider tests.
+3. Ground explanations in versioned deterministic results.
+4. Enforce permissions, credential isolation, and log/export redaction.
+
+### M4 — 3D preview
+
+1. Render the engine-owned robot with matching units, joint order, and frames.
+2. Add workspace, target, constraint, singularity, collision, and trajectory
+   overlays.
+3. Connect candidate selection and comparison without duplicating engineering
+   calculations in TypeScript.
+4. Add visual regression and model/frame consistency tests.
+
+### M5 — Desktop packaging
+
+1. Integrate M1-M4 into the existing Tauri/React scaffold.
+2. Complete production save/recovery, migrations, settings, keychain,
+   diagnostics, and process lifecycle behavior.
+3. Bundle the C++ engine and native libraries on Windows, macOS, and Linux.
+4. Add installers, signing/notarization, update policy, sample project, offline
+   workflow, licenses, checksums, and SBOM.
+5. Run install, upgrade, uninstall, crash, restart, shutdown, and full workflow
+   E2E tests on clean systems.
 
 ## Current constraints and risks
 
 | Risk | Current response |
 | --- | --- |
-| Native robotics dependencies differ by platform | Resolve in M0.2 before product feature work |
-| IPC ambiguity causes cross-language drift | Versioned schema, fixtures, and contract tests |
-| Native crash or cancellation leaves orphan processes | Rust owns lifecycle; test crash and shutdown paths in M0.3 |
-| Numerical results look plausible but are wrong | G2 requires analytic, independent, golden, property, and platform evidence |
-| Catalog gaps appear safe | Missing values are explicit and fail closed |
-| AI silently changes requirements | AI emits patches; users approve fields before a revision exists |
-
-The current macOS arm64 environment compiles application targets with Apple
-Clang 21. Conan uses a checked-in Apple Clang 17 compatibility profile for the
-available libc++ package graph, with all caches and build outputs under
-`build/`. Pinocchio 3.8.0, Ceres 2.2.0, Eigen 3.4.1, and nlohmann/json 3.12.0
-are installed and locked. The Rust lifecycle client and Tauri/React desktop
-scaffold are implemented. Complete M0 work still requires cross-platform
-lifecycle evidence, desktop compilation and end-to-end validation, packaged
-three-platform evidence, and the remaining M0.4/G0 acceptance paths.
+| Platform packaging delays core value | G0 confirms architecture; M5 owns finished packaging |
+| Workspace requirements do not determine unique geometry | Use bounded optimization, report residuals and active constraints, and avoid claiming global optimality |
+| Payload and TCP limits under-specify dynamics | Require or derive explicit mass properties, evaluation cases, gravity, transmissions, and safety factors |
+| Reachable endpoints hide poor intermediate behavior | Verify target sets, joint limits, conditioning, and modeled constraints |
+| Numerical results look plausible but are wrong | Require analytic, independent, finite-difference, property, and platform evidence |
+| Catalog gaps appear safe | Represent missing values explicitly and fail closed |
+| AI silently changes requirements | AI emits patches and users approve fields before a revision exists |
+| 3D drifts from engineering state | Treat engine model and frames as authoritative and test scene consistency |

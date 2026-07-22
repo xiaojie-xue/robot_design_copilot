@@ -6,41 +6,52 @@ Decision: Pending
 
 ## Purpose
 
-Verify that the TypeScript–Rust–C++ application builds, packages, and runs without an external runtime on every supported platform.
+Confirm the TypeScript–Rust–C++ architecture and the Windows, macOS, and Linux
+platform direction before starting the minimum design calculation. G0 validates
+the foundation and major platform choices; it does not certify finished desktop
+packaging.
 
 ## Entry criteria
 
-- [ ] M0 implementation is complete. Packaging and full desktop evidence remain open.
-- [x] The engine links Eigen, Pinocchio, and Ceres in the robotics-enabled build.
-- [ ] Tauri starts, communicates with, and stops the engine. The binding is
-  implemented, but the integrated desktop path has not been executed in a
-  child-process-capable environment.
-- [x] The Windows, macOS, and Linux CI matrix exists for the C++ core and Rust
-  lifecycle client.
+- The React/Tauri, Rust lifecycle, and C++ engine boundaries are implemented.
+- The engine links the selected Eigen, Pinocchio, Ceres, and JSON dependencies.
+- The sidecar protocol covers framing, request IDs, errors, progress,
+  cancellation, and version rejection.
+- Windows, macOS, and Linux build toolchains and CI jobs are defined.
+- Architecture ADRs and dependency/license records are committed.
 
 ## Required evidence
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
-| All platform builds complete | Matrix is defined; reviewed green desktop/package runs are not available | Pending |
-| Packages contain engine dependencies | Artifact inspection | Pending |
-| End-to-end FK request succeeds | C++ framed smoke test and desktop implementation exist; integrated desktop smoke test pending | Partial |
-| Engine crash is isolated from the UI | Rust child-crash lifecycle test implemented; desktop evidence pending | Partial |
-| Timeout and cancellation complete | C++ session tests pass locally and Rust lifecycle tests exist; matrix evidence pending | Partial |
-| Exit leaves no child process | Rust graceful/forced shutdown test implemented; desktop evidence pending | Partial |
-| Protocol version is enforced | C++ contract tests pass locally and Rust contract tests exist; matrix evidence pending | Partial |
+| Language and process boundaries are fixed | ADR review and architecture diagram | Partial |
+| C++ dependency set resolves and builds | Lockfile, build logs, and health output | Partial |
+| Sidecar IPC contract works | Protocol, framing, and real-process smoke tests | Partial |
+| Engine lifecycle is isolated | Rust startup, timeout, cancellation, crash, restart, and shutdown tests | Partial |
+| All target platforms have a viable build path | Toolchain definitions and CI compile/test matrix | Pending |
+| Native dependency and license obligations are known | Lockfile and third-party license inventory | Partial |
+| Remaining packaging risks are owned by M5 | Recorded risk review | Pending |
 
 ## Exit criteria
 
-- [ ] Windows, macOS, and Linux smoke tests pass.
-- [ ] No external compiler or runtime is required.
-- [x] IPC framing, errors, progress, cancellation, and version checks pass
-  locally; three-platform gate evidence remains pending.
-- [x] Protocol output uses stdout and logs use stderr in the implemented CLI
-  boundary and local integration coverage.
-- [x] Native dependencies and licenses are recorded in the Conan manifest,
-  lockfile, and `THIRD_PARTY_LICENSES.md`.
-- [ ] No unresolved packaging blocker remains.
+- [ ] TypeScript, Rust, and C++ ownership boundaries are accepted.
+- [ ] The sidecar protocol and process-isolation approach have no unresolved
+  architecture blocker.
+- [ ] The selected robotics dependencies have a documented build path for
+  Windows, macOS, and Linux.
+- [ ] Baseline core and lifecycle compile/test jobs pass on the supported CI
+  runners, or an explicitly approved platform exception is recorded.
+- [ ] Native dependencies, licenses, and known packaging risks are documented.
+- [ ] Remaining installer, signing, bundling, and full desktop E2E work is
+  assigned to M5/G4 rather than treated as a G0 blocker.
+
+## Not required for G0
+
+- Finished unsigned or signed installers
+- Full native-library bundle inspection
+- Clean-system installation, update, or uninstall tests
+- Complete desktop engineering workflow E2E
+- Final UI crash recovery or product diagnostics
 
 ## Review record
 

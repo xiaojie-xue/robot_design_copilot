@@ -1,7 +1,9 @@
 # G4 — Release Readiness Gate
 
-Status: Not reviewed  
-Applies after: [M8](../milestones/M8-beta-release.md)  
+Status: Not reviewed
+
+Applies after: [M5](../milestones/M5-desktop-packaging.md)
+
 Decision: Pending
 
 ## Purpose
@@ -10,7 +12,7 @@ Verify that a non-developer can install, use, update, and remove the beta on eve
 
 ## Entry criteria
 
-- Required M0–M8 work is complete.
+- Required M0–M5 work is complete.
 - G0–G3 have passed.
 - Candidate installers are available.
 - Quick-start, safety, and limitation documents are ready.

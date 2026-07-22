@@ -73,11 +73,15 @@ Robot Design Copilot is an engineering assistance tool, not a certification auth
 
 See the [project roadmap](docs/project/roadmap.md), [architecture overview](docs/architecture/overview.md), and [gate reviews](docs/project/gates/README.md).
 
-Development has started with the M0 platform baseline. The current sidecar
-implements bounded IPC framing, protocol-v1 validation, structured errors, and
-an `engine.health` request. Its C++ request session runs concurrent jobs,
-serializes progress and terminal envelopes, propagates cooperative cancellation,
-and joins workers on shutdown. The Rust lifecycle client owns the isolated
+Development retains the original M0 platform baseline. Its narrowed G0 review
+confirms the architecture and three-platform build direction without requiring
+finished desktop packaging. M1 then delivers a minimal executable that derives
+link lengths from workspace requirements and per-joint requirements from the
+resulting geometry, payload, and motion limits. The current sidecar implements
+bounded IPC framing, protocol-v1 validation,
+structured errors, and an `engine.health` request. Its C++ request session runs
+concurrent jobs, serializes progress and terminal envelopes, propagates
+cooperative cancellation, and joins workers on shutdown. The Rust lifecycle client owns the isolated
 engine process, matches concurrent requests, enforces timeouts, sends
 cancellation, and handles crash, restart, and shutdown paths. See the
 [development plan](docs/project/development-plan.md) for delivery order and the
@@ -135,10 +139,10 @@ toolchain is reused only when it matches the pinned Rust version. A first-time
 rustup bootstrap requires `RUSTUP_DIST_SERVER` to be set by the developer. All
 Rust state and generated files remain under `build/`.
 
-The M0 desktop FK scaffold uses Tauri 2, React, and a minimum command surface:
-the webview can request engine health, forward kinematics, or an engine restart,
-but it has no direct shell permission. Install and verify the frontend without
-starting the engine:
+The M0 desktop FK scaffold uses Tauri 2, React, and a minimum command surface.
+It is reused during M5 product packaging. The webview can request engine health,
+forward kinematics, or an engine restart, but it has no direct shell permission.
+Install and verify the frontend without starting the engine:
 
 ```shell
 corepack enable
