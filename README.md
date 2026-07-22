@@ -75,7 +75,11 @@ See the [project roadmap](docs/project/roadmap.md), [architecture overview](docs
 
 Development has started with the M0 platform baseline. The current sidecar
 implements bounded IPC framing, protocol-v1 validation, structured errors, and
-an `engine.health` request. See the
+an `engine.health` request. Its C++ request session runs concurrent jobs,
+serializes progress and terminal envelopes, propagates cooperative cancellation,
+and joins workers on shutdown. The Rust lifecycle client owns the isolated
+engine process, matches concurrent requests, enforces timeouts, sends
+cancellation, and handles crash, restart, and shutdown paths. See the
 [development plan](docs/project/development-plan.md) for delivery order and the
 current work breakdown. The first C++ engine slice uses CMake 3.24+ and a
 C++20 compiler:
@@ -125,14 +129,36 @@ bash scripts/setup-rust.sh
 bash scripts/test-rust-client.sh
 ```
 
-The setup uses USTC mirrors by default for both rustup downloads and Cargo's
-sparse registry. An existing repository-local toolchain is reused only when it
-matches the pinned Rust version. To use the Tsinghua TUNA rustup mirror for one
-setup run, set
-`RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup` and
-`RUSTUP_UPDATE_ROOT=https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup`.
-Cargo's repository-level mirror is configured in `.cargo/config.toml`. All Rust
-state and generated files remain under `build/`.
+The setup respects each developer's existing rustup and Cargo source settings;
+the repository does not select a registry mirror. An existing repository-local
+toolchain is reused only when it matches the pinned Rust version. A first-time
+rustup bootstrap requires `RUSTUP_DIST_SERVER` to be set by the developer. All
+Rust state and generated files remain under `build/`.
+
+The M0 desktop FK scaffold uses Tauri 2, React, and a minimum command surface:
+the webview can request engine health, forward kinematics, or an engine restart,
+but it has no direct shell permission. Install and verify the frontend without
+starting the engine:
+
+```shell
+corepack enable
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm check
+pnpm test
+pnpm build
+```
+
+After `scripts/test-robotics.sh` has produced the C++ executable, stage it under
+Tauri's target-triple filename and launch the desktop application in a normal
+development environment:
+
+```shell
+python3 scripts/stage-sidecar.py
+pnpm tauri dev
+```
+
+The last command launches the bundled engine sidecar. Do not run it in process
+sandboxes that terminate applications when they create child processes.
 
 ## Contributing
 

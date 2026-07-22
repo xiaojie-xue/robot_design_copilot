@@ -46,4 +46,13 @@ User description
 5. Cross-language interfaces use versioned data contracts, not private language types.
 6. The engineering core uses SI units.
 
+## M0 desktop command boundary
+
+The first desktop slice exposes only `engine_health`, `forward_kinematics`, and
+`restart_engine` to React. Tauri owns the `robot-engine-client`, resolves the
+bundled `robot-engine-cli-$TARGET_TRIPLE` external binary, and maps transport or
+protocol failures into structured command errors. The webview receives no shell
+plugin capability, so it cannot spawn arbitrary processes or bypass the Rust
+lifecycle owner.
+
 See [ADRs](../adr/README.md) for decisions and the [roadmap](../project/roadmap.md) for delivery order.

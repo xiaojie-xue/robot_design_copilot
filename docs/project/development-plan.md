@@ -50,7 +50,8 @@ transport proof only; it is not the M0 end-to-end FK demonstration.
 
 Current evidence: the CMake build, framing tests, protocol tests, sanitizer
 build, and a real stdin/stdout health request pass on macOS. The CI matrix is
-defined but has not yet produced review evidence, so M0.1 remains in progress.
+defined for both the C++ transport and Rust lifecycle client but has not yet
+produced review evidence, so M0.1 remains in progress.
 
 ### M0.2 — Engineering dependency spike
 
@@ -82,8 +83,18 @@ Done when lifecycle and contract tests pass on all target runners.
 
 Current progress: the C++ sidecar validates protocol-v1 request envelopes,
 correlates responses, rejects unsupported versions and unknown fields, returns
-structured errors, and implements `engine.health`. Progress/cancellation and
-the Rust lifecycle client remain open.
+structured errors, and implements `engine.health`. Its request session runs
+independent jobs concurrently, serializes complete stdout envelopes, rejects
+duplicate in-flight IDs, emits schema-valid progress, propagates cooperative
+stop tokens, completes cancelled work with `request_cancelled`, and joins all
+workers during shutdown. In-process tests cover out-of-order correlation,
+progress ordering, cancellation, duplicate IDs, invalid cancellation, and output
+failure. The Rust lifecycle client owns child startup, concurrent request
+matching, timeout-triggered cancellation, crash isolation, explicit restart,
+graceful/forced shutdown, bounded stderr capture, and strict inbound envelope
+validation. Pure protocol, C++ session, fake-process lifecycle, and real
+Rust-to-C++ integration tests are implemented. Cross-platform CI review evidence
+remains open.
 
 ### M0.4 — Desktop FK slice and G0 review
 
@@ -99,7 +110,14 @@ Current progress: the C++ sidecar accepts seven finite joint positions through
 `kinematics.forward`, computes `base_T_tool0` with Pinocchio, and returns metres
 plus an explicit xyzw quaternion. Committed fixtures, analytic zero/quarter-turn
 cases, invalid-parameter cases, and real framed process exchanges pass locally.
-The Tauri/React UI, Rust lifecycle owner, bundling, and G0 evidence remain open.
+The Tauri 2/React scaffold now provides seven validated joint inputs, engine
+health/restart controls, structured command errors, and versioned pose output.
+Tauri owns the Rust lifecycle client behind typed commands; the webview has no
+shell capability. The C++ executable can be staged with Tauri's target-triple
+sidecar filename, and frontend type checks, domain tests, and production builds
+run without starting that sidecar. Desktop compilation, end-to-end execution,
+native-library bundling, unsigned three-platform artifacts, and the complete G0
+evidence package remain open.
 
 ## Next milestones
 
@@ -137,6 +155,7 @@ The current macOS arm64 environment compiles application targets with Apple
 Clang 21. Conan uses a checked-in Apple Clang 17 compatibility profile for the
 available libc++ package graph, with all caches and build outputs under
 `build/`. Pinocchio 3.8.0, Ceres 2.2.0, Eigen 3.4.1, and nlohmann/json 3.12.0
-are installed and locked. Complete M0 work still requires the Rust/Tauri
-toolchain, lifecycle implementation, packaged three-platform evidence, and the
-remaining M0.3-M0.4 acceptance paths.
+are installed and locked. The Rust lifecycle client and Tauri/React desktop
+scaffold are implemented. Complete M0 work still requires cross-platform
+lifecycle evidence, desktop compilation and end-to-end validation, packaged
+three-platform evidence, and the remaining M0.4/G0 acceptance paths.

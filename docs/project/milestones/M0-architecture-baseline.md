@@ -40,5 +40,5 @@ Enter joint positions in the desktop UI, compute the end-effector pose in Pinocc
 - [ ] Unsigned application artifacts run on all three platforms.
 - [ ] No external compiler or runtime is required.
 - [ ] Engine failure does not terminate the UI process.
-- [ ] IPC error, timeout, cancellation, and version paths are tested.
+- [x] IPC error, timeout, cancellation, and version paths are tested locally.
 - [ ] G0 passes.

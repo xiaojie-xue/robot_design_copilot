@@ -21,11 +21,11 @@ Verify that the TypeScript–Rust–C++ application builds, packages, and runs w
 | --- | --- | --- |
 | All platform builds complete | CI build matrix | Pending |
 | Packages contain engine dependencies | Artifact inspection | Pending |
-| End-to-end FK request succeeds | Smoke test | Pending |
-| Engine crash is isolated from the UI | Crash-path test | Pending |
-| Timeout and cancellation complete | IPC tests | Pending |
-| Exit leaves no child process | Lifecycle test | Pending |
-| Protocol version is enforced | Contract tests | Pending |
+| End-to-end FK request succeeds | C++ framed smoke test passes locally; desktop smoke test pending | Partial |
+| Engine crash is isolated from the UI | Rust child-crash lifecycle test implemented; desktop evidence pending | Partial |
+| Timeout and cancellation complete | C++ session and Rust lifecycle tests implemented; matrix evidence pending | Partial |
+| Exit leaves no child process | Rust graceful/forced shutdown test implemented; desktop evidence pending | Partial |
+| Protocol version is enforced | C++ and Rust contract tests implemented; matrix evidence pending | Partial |
 
 ## Exit criteria
 
