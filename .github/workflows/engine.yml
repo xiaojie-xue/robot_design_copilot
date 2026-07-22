@@ -9,17 +9,49 @@ permissions:
   contents: read
 
 jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Check frontend types
+        run: pnpm check
+      - name: Test frontend domain logic
+        run: pnpm test
+      - name: Build frontend assets
+        run: pnpm build
+
   build-and-test:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      ROBOT_ENGINE_TEST_PYTHON: python
+      ROBOT_ENGINE_TEST_STATE_DIR: ${{ github.workspace }}/build/rust-test-state
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
       - name: Configure
         run: cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: cmake --build build --config Debug
       - name: Test
         run: ctest --test-dir build -C Debug --output-on-failure
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component rustfmt,clippy
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Lint Rust engine client
+        run: cargo clippy --workspace --lib --tests --locked -- -D warnings
+      - name: Test Rust protocol and lifecycle client
+        run: cargo test --workspace --lib --test lifecycle --locked
