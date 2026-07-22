@@ -119,10 +119,10 @@ impl EngineSupervisor {
 
     pub fn start(&self) -> Result<Arc<EngineClient>, ClientError> {
         let mut slot = lock(&self.client);
-        if let Some(client) = slot.as_ref() {
-            if client.is_running()? {
-                return Ok(Arc::clone(client));
-            }
+        if let Some(client) = slot.as_ref()
+            && client.is_running()?
+        {
+            return Ok(Arc::clone(client));
         }
         let client = Arc::new(self.command.spawn()?);
         *slot = Some(Arc::clone(&client));
@@ -616,11 +616,10 @@ fn validate_fields(
             "{context} is missing {field}"
         )));
     }
-    if let Some(field) = object.keys().find(|field| {
-        !allowed
-            .iter()
-            .any(|allowed_field| field.as_str() == *allowed_field)
-    }) {
+    if let Some(field) = object
+        .keys()
+        .find(|field| !allowed.contains(&field.as_str()))
+    {
         return Err(ClientError::Protocol(format!(
             "{context} contains unsupported field {field}"
         )));
