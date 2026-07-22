@@ -116,7 +116,6 @@ pub struct ForwardKinematicsRequest {
 #[serde(rename_all = "camelCase")]
 pub struct EngineHealth {
     engine_version: String,
-    protocol_version: u64,
     status: String,
     capabilities: Vec<String>,
     dependencies: BTreeMap<String, String>,
@@ -208,16 +207,6 @@ fn parse_health(response: Value) -> Result<EngineHealth, CommandError> {
     let result = response.get("result").ok_or_else(|| {
         CommandError::new("engine_protocol", "Health response has no result.", false)
     })?;
-    let protocol_version = result
-        .get("protocol_version")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| {
-            CommandError::new(
-                "engine_protocol",
-                "Health response has no protocol version.",
-                false,
-            )
-        })?;
     let status = required_string(result, "status")?;
     let capabilities = serde_json::from_value(
         result
@@ -235,7 +224,6 @@ fn parse_health(response: Value) -> Result<EngineHealth, CommandError> {
     .map_err(protocol_decode_error)?;
     Ok(EngineHealth {
         engine_version,
-        protocol_version,
         status,
         capabilities,
         dependencies,
@@ -292,11 +280,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parses_versioned_forward_result() {
+    fn parses_forward_result() {
         let parsed = parse_forward(json!({
             "engine_version": "0.1.0",
             "result": {
-                "model_id": "reference_arm_7dof_v1",
+                "model_id": "reference_arm_7dof",
                 "base_frame": "base",
                 "tool_frame": "tool0",
                 "joint_count": 7,
@@ -314,7 +302,7 @@ mod tests {
         let error = parse_forward(json!({
             "engine_version": "0.1.0",
             "result": {
-                "model_id": "reference_arm_7dof_v1",
+                "model_id": "reference_arm_7dof",
                 "base_frame": "base",
                 "tool_frame": "tool0",
                 "joint_count": 7,

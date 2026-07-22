@@ -120,7 +120,7 @@ export function App() {
           <h2>Forward kinematics, across the real process boundary.</h2>
           <p className="hero-copy">
             Enter seven joint positions in radians. Rust owns the isolated engine process;
-            Pinocchio computes the versioned <code>base_T_tool0</code> result.
+            Pinocchio computes the <code>base_T_tool0</code> result.
           </p>
         </div>
         <dl className="contract-summary">
@@ -252,8 +252,8 @@ export function App() {
 
       <footer className="engine-strip">
         <div>
-          <span>Protocol</span>
-          <strong>v{health?.protocolVersion ?? 1}</strong>
+          <span>Engine</span>
+          <strong>{health?.engineVersion ?? "Awaiting desktop engine"}</strong>
         </div>
         <div>
           <span>Capabilities</span>

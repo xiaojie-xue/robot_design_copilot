@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex, MutexGuard, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub const PROTOCOL_VERSION: u64 = 1;
 pub const MAX_FRAME_SIZE: usize = 16 * 1024 * 1024;
 const MAX_CAPTURED_STDERR: usize = 64 * 1024;
 
@@ -276,7 +275,6 @@ impl EngineClient {
         let request_number = self.next_request_id.fetch_add(1, Ordering::Relaxed);
         let request_id = format!("rust-{request_number}");
         let envelope = json!({
-            "protocol_version": PROTOCOL_VERSION,
             "type": "request",
             "request_id": request_id,
             "method": method,
@@ -314,7 +312,6 @@ impl EngineClient {
     pub fn cancel(&self, request_id: &str) -> Result<(), ClientError> {
         validate_request_id(request_id)?;
         let envelope = json!({
-            "protocol_version": PROTOCOL_VERSION,
             "type": "cancel",
             "request_id": request_id,
         });
@@ -492,11 +489,6 @@ fn parse_event(
     let envelope = envelope
         .as_object()
         .ok_or_else(|| ClientError::Protocol("engine envelope is not an object".to_owned()))?;
-    if envelope.get("protocol_version").and_then(Value::as_u64) != Some(PROTOCOL_VERSION) {
-        return Err(ClientError::Protocol(
-            "engine response uses an unsupported protocol version".to_owned(),
-        ));
-    }
     let request_id = envelope
         .get("request_id")
         .and_then(Value::as_str)
@@ -507,8 +499,8 @@ fn parse_event(
         Some("progress") => {
             validate_fields(
                 envelope,
-                &["protocol_version", "type", "request_id", "progress"],
-                &["protocol_version", "type", "request_id", "progress"],
+                &["type", "request_id", "progress"],
+                &["type", "request_id", "progress"],
                 "progress envelope",
             )?;
             validate_progress(envelope.get("progress"))?;
@@ -521,20 +513,8 @@ fn parse_event(
         Some("response") => {
             validate_fields(
                 envelope,
-                &[
-                    "protocol_version",
-                    "type",
-                    "request_id",
-                    "engine_version",
-                    "result",
-                ],
-                &[
-                    "protocol_version",
-                    "type",
-                    "request_id",
-                    "engine_version",
-                    "result",
-                ],
+                &["type", "request_id", "engine_version", "result"],
+                &["type", "request_id", "engine_version", "result"],
                 "response envelope",
             )?;
             required_nonempty_string(envelope.get("engine_version"), "engine_version")?;
@@ -547,20 +527,8 @@ fn parse_event(
         Some("error") => {
             validate_fields(
                 envelope,
-                &[
-                    "protocol_version",
-                    "type",
-                    "request_id",
-                    "engine_version",
-                    "error",
-                ],
-                &[
-                    "protocol_version",
-                    "type",
-                    "request_id",
-                    "engine_version",
-                    "error",
-                ],
+                &["type", "request_id", "engine_version", "error"],
+                &["type", "request_id", "engine_version", "error"],
                 "error envelope",
             )?;
             required_nonempty_string(envelope.get("engine_version"), "engine_version")?;
@@ -715,7 +683,7 @@ mod tests {
 
     #[test]
     fn reads_one_bounded_frame() {
-        let payload = br#"{"protocol_version":1}"#;
+        let payload = br#"{"type":"request"}"#;
         let mut input = Cursor::new(framed(payload));
         assert_eq!(
             read_frame(&mut input).expect("read frame"),
@@ -746,21 +714,9 @@ mod tests {
     }
 
     #[test]
-    fn rejects_malformed_json_and_wrong_protocol_version() {
+    fn rejects_malformed_json() {
         assert!(matches!(
             parse_event(Some(b"{".to_vec())),
-            Err(ClientError::Protocol(_))
-        ));
-        let wrong_version = serde_json::to_vec(&json!({
-            "protocol_version": 2,
-            "type": "response",
-            "request_id": "rust-1",
-            "engine_version": "fixture",
-            "result": {}
-        }))
-        .expect("serialize fixture");
-        assert!(matches!(
-            parse_event(Some(wrong_version)),
             Err(ClientError::Protocol(_))
         ));
     }
@@ -768,7 +724,6 @@ mod tests {
     #[test]
     fn validates_response_envelope_shape() {
         let valid = serde_json::to_vec(&json!({
-            "protocol_version": 1,
             "type": "response",
             "request_id": "rust-1",
             "engine_version": "fixture",
@@ -783,27 +738,23 @@ mod tests {
 
         for invalid in [
             json!({
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": "rust-1",
                 "engine_version": "fixture"
             }),
             json!({
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": "bad request id",
                 "engine_version": "fixture",
                 "result": {}
             }),
             json!({
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": "rust-1",
                 "engine_version": "",
                 "result": {}
             }),
             json!({
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": "rust-1",
                 "engine_version": "fixture",
@@ -822,7 +773,6 @@ mod tests {
     #[test]
     fn validates_progress_envelope_shape() {
         let valid = serde_json::to_vec(&json!({
-            "protocol_version": 1,
             "type": "progress",
             "request_id": "rust-2",
             "progress": {
@@ -845,7 +795,6 @@ mod tests {
             json!({"fraction": 0.5, "stage": "solving", "future": true}),
         ] {
             let payload = serde_json::to_vec(&json!({
-                "protocol_version": 1,
                 "type": "progress",
                 "request_id": "rust-2",
                 "progress": invalid_progress
@@ -861,7 +810,6 @@ mod tests {
     #[test]
     fn validates_structured_error_shape() {
         let valid = serde_json::to_vec(&json!({
-            "protocol_version": 1,
             "type": "error",
             "request_id": "rust-3",
             "engine_version": "fixture",
@@ -897,7 +845,6 @@ mod tests {
             }),
         ] {
             let payload = serde_json::to_vec(&json!({
-                "protocol_version": 1,
                 "type": "error",
                 "request_id": "rust-3",
                 "engine_version": "fixture",

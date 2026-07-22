@@ -65,7 +65,6 @@ def main() -> int:
         request_id = request["request_id"]
         write_frame(
             {
-                "protocol_version": 1,
                 "type": "progress",
                 "request_id": request_id,
                 "progress": {"fraction": 0.5, "stage": "fixture"},
@@ -73,7 +72,6 @@ def main() -> int:
         )
         write_frame(
             {
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": request_id,
                 "engine_version": "fixture",
@@ -91,7 +89,6 @@ def main() -> int:
             os._exit(42)
         write_frame(
             {
-                "protocol_version": 1,
                 "type": "response",
                 "request_id": request["request_id"],
                 "engine_version": "fixture",

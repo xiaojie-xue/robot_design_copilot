@@ -23,7 +23,7 @@ fn health_and_forward_kinematics_cross_the_rust_cpp_boundary() {
     assert_eq!(health["result"]["status"], "ok");
     assert_eq!(
         health["result"]["capabilities"],
-        json!(["engine.health", "kinematics.forward"])
+        json!(["engine.health", "design.calculate", "kinematics.forward"])
     );
 
     let forward = client
@@ -33,7 +33,7 @@ fn health_and_forward_kinematics_cross_the_rust_cpp_boundary() {
             Duration::from_secs(3),
         )
         .expect("forward response");
-    assert_eq!(forward["result"]["model_id"], "reference_arm_7dof_v1");
+    assert_eq!(forward["result"]["model_id"], "reference_arm_7dof");
     assert_eq!(forward["result"]["base_frame"], "base");
     assert_eq!(forward["result"]["tool_frame"], "tool0");
     assert_eq!(forward["result"]["translation_m"], json!([1.26, 0.0, 0.54]));

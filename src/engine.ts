@@ -4,7 +4,6 @@ import type { JointVector } from "./domain/joints";
 
 export interface EngineHealth {
   engineVersion: string;
-  protocolVersion: number;
   status: string;
   capabilities: string[];
   dependencies: Record<string, string>;
