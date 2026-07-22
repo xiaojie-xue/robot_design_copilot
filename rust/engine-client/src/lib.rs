@@ -1,4 +1,4 @@
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -172,8 +172,13 @@ impl EngineClient {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let mut child = Command::new(program.as_ref())
-            .args(args)
+        let mut command = Command::new(program.as_ref());
+        command.args(args);
+        Self::spawn_command(command)
+    }
+
+    pub fn spawn_command(mut command: Command) -> Result<Self, ClientError> {
+        let mut child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -307,6 +312,7 @@ impl EngineClient {
     }
 
     pub fn cancel(&self, request_id: &str) -> Result<(), ClientError> {
+        validate_request_id(request_id)?;
         let envelope = json!({
             "protocol_version": PROTOCOL_VERSION,
             "type": "cancel",
@@ -483,6 +489,9 @@ fn parse_event(
     };
     let envelope: Value = serde_json::from_slice(&payload)
         .map_err(|error| ClientError::Protocol(format!("invalid JSON response: {error}")))?;
+    let envelope = envelope
+        .as_object()
+        .ok_or_else(|| ClientError::Protocol("engine envelope is not an object".to_owned()))?;
     if envelope.get("protocol_version").and_then(Value::as_u64) != Some(PROTOCOL_VERSION) {
         return Err(ClientError::Protocol(
             "engine response uses an unsupported protocol version".to_owned(),
@@ -493,21 +502,91 @@ fn parse_event(
         .and_then(Value::as_str)
         .ok_or_else(|| ClientError::Protocol("engine response has no request_id".to_owned()))?
         .to_owned();
+    validate_request_id(&request_id)?;
     match envelope.get("type").and_then(Value::as_str) {
-        Some("progress") => Ok(Some((request_id, EngineEvent::Progress(envelope), false))),
-        Some("response") => Ok(Some((request_id, EngineEvent::Response(envelope), true))),
+        Some("progress") => {
+            validate_fields(
+                envelope,
+                &["protocol_version", "type", "request_id", "progress"],
+                &["protocol_version", "type", "request_id", "progress"],
+                "progress envelope",
+            )?;
+            validate_progress(envelope.get("progress"))?;
+            Ok(Some((
+                request_id,
+                EngineEvent::Progress(Value::Object(envelope.clone())),
+                false,
+            )))
+        }
+        Some("response") => {
+            validate_fields(
+                envelope,
+                &[
+                    "protocol_version",
+                    "type",
+                    "request_id",
+                    "engine_version",
+                    "result",
+                ],
+                &[
+                    "protocol_version",
+                    "type",
+                    "request_id",
+                    "engine_version",
+                    "result",
+                ],
+                "response envelope",
+            )?;
+            required_nonempty_string(envelope.get("engine_version"), "engine_version")?;
+            Ok(Some((
+                request_id,
+                EngineEvent::Response(Value::Object(envelope.clone())),
+                true,
+            )))
+        }
         Some("error") => {
+            validate_fields(
+                envelope,
+                &[
+                    "protocol_version",
+                    "type",
+                    "request_id",
+                    "engine_version",
+                    "error",
+                ],
+                &[
+                    "protocol_version",
+                    "type",
+                    "request_id",
+                    "engine_version",
+                    "error",
+                ],
+                "error envelope",
+            )?;
+            required_nonempty_string(envelope.get("engine_version"), "engine_version")?;
             let error = envelope
                 .get("error")
                 .and_then(Value::as_object)
                 .ok_or_else(|| ClientError::Protocol("malformed engine error".to_owned()))?;
-            let code = required_string(error.get("code"), "error.code")?;
-            let message = required_string(error.get("message"), "error.message")?;
+            validate_fields(
+                error,
+                &["code", "message", "retryable"],
+                &["code", "message", "retryable", "details"],
+                "error detail",
+            )?;
+            let code = required_nonempty_string(error.get("code"), "error.code")?;
+            let message = required_nonempty_string(error.get("message"), "error.message")?;
             let retryable = error
                 .get("retryable")
                 .and_then(Value::as_bool)
                 .ok_or_else(|| ClientError::Protocol("invalid error.retryable".to_owned()))?;
-            let details = error.get("details").cloned();
+            let details = match error.get("details") {
+                Some(Value::Object(_)) => error.get("details").cloned(),
+                Some(_) => {
+                    return Err(ClientError::Protocol("invalid error.details".to_owned()));
+                }
+                None => None,
+            };
             Ok(Some((
                 request_id.clone(),
                 EngineEvent::Error(ClientError::Engine {
@@ -526,11 +605,70 @@ fn parse_event(
     }
 }
 
-fn required_string(value: Option<&Value>, field: &str) -> Result<String, ClientError> {
+fn validate_fields(
+    object: &Map<String, Value>,
+    required: &[&str],
+    allowed: &[&str],
+    context: &str,
+) -> Result<(), ClientError> {
+    if let Some(field) = required.iter().find(|field| !object.contains_key(**field)) {
+        return Err(ClientError::Protocol(format!(
+            "{context} is missing {field}"
+        )));
+    }
+    if let Some(field) = object.keys().find(|field| {
+        !allowed
+            .iter()
+            .any(|allowed_field| field.as_str() == *allowed_field)
+    }) {
+        return Err(ClientError::Protocol(format!(
+            "{context} contains unsupported field {field}"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_progress(value: Option<&Value>) -> Result<(), ClientError> {
+    let progress = value
+        .and_then(Value::as_object)
+        .ok_or_else(|| ClientError::Protocol("invalid progress".to_owned()))?;
+    validate_fields(
+        progress,
+        &["fraction", "stage"],
+        &["fraction", "stage", "message"],
+        "progress",
+    )?;
+    progress
+        .get("fraction")
+        .and_then(Value::as_f64)
+        .filter(|fraction| fraction.is_finite() && (0.0..=1.0).contains(fraction))
+        .ok_or_else(|| ClientError::Protocol("invalid progress.fraction".to_owned()))?;
+    required_nonempty_string(progress.get("stage"), "progress.stage")?;
+    if !matches!(progress.get("message"), None | Some(Value::String(_))) {
+        return Err(ClientError::Protocol("invalid progress.message".to_owned()));
+    }
+    Ok(())
+}
+
+fn required_nonempty_string(value: Option<&Value>, field: &str) -> Result<String, ClientError> {
     value
         .and_then(Value::as_str)
+        .filter(|text| !text.is_empty())
         .map(ToOwned::to_owned)
         .ok_or_else(|| ClientError::Protocol(format!("invalid {field}")))
+}
+
+fn validate_request_id(request_id: &str) -> Result<(), ClientError> {
+    let mut bytes = request_id.bytes();
+    if !matches!(bytes.next(), Some(byte) if byte.is_ascii_alphanumeric())
+        || request_id.len() > 128
+        || !bytes.all(|byte| byte.is_ascii_alphanumeric() || b"._:-".contains(&byte))
+    {
+        return Err(ClientError::Protocol(
+            "request_id is outside the protocol identifier grammar".to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 fn validate_method(method: &str) -> Result<(), ClientError> {
@@ -629,9 +767,163 @@ mod tests {
     }
 
     #[test]
+    fn validates_response_envelope_shape() {
+        let valid = serde_json::to_vec(&json!({
+            "protocol_version": 1,
+            "type": "response",
+            "request_id": "rust-1",
+            "engine_version": "fixture",
+            "result": {"status": "ok"}
+        }))
+        .expect("serialize response");
+        assert!(matches!(
+            parse_event(Some(valid)),
+            Ok(Some((request_id, EngineEvent::Response(_), true)))
+                if request_id == "rust-1"
+        ));
+
+        for invalid in [
+            json!({
+                "protocol_version": 1,
+                "type": "response",
+                "request_id": "rust-1",
+                "engine_version": "fixture"
+            }),
+            json!({
+                "protocol_version": 1,
+                "type": "response",
+                "request_id": "bad request id",
+                "engine_version": "fixture",
+                "result": {}
+            }),
+            json!({
+                "protocol_version": 1,
+                "type": "response",
+                "request_id": "rust-1",
+                "engine_version": "",
+                "result": {}
+            }),
+            json!({
+                "protocol_version": 1,
+                "type": "response",
+                "request_id": "rust-1",
+                "engine_version": "fixture",
+                "result": {},
+                "future": true
+            }),
+        ] {
+            let payload = serde_json::to_vec(&invalid).expect("serialize invalid response");
+            assert!(matches!(
+                parse_event(Some(payload)),
+                Err(ClientError::Protocol(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn validates_progress_envelope_shape() {
+        let valid = serde_json::to_vec(&json!({
+            "protocol_version": 1,
+            "type": "progress",
+            "request_id": "rust-2",
+            "progress": {
+                "fraction": 0.5,
+                "stage": "solving",
+                "message": "halfway"
+            }
+        }))
+        .expect("serialize progress");
+        assert!(matches!(
+            parse_event(Some(valid)),
+            Ok(Some((request_id, EngineEvent::Progress(_), false)))
+                if request_id == "rust-2"
+        ));
+
+        for invalid_progress in [
+            json!({"fraction": 1.1, "stage": "solving"}),
+            json!({"fraction": 0.5, "stage": ""}),
+            json!({"fraction": 0.5, "stage": "solving", "message": 3}),
+            json!({"fraction": 0.5, "stage": "solving", "future": true}),
+        ] {
+            let payload = serde_json::to_vec(&json!({
+                "protocol_version": 1,
+                "type": "progress",
+                "request_id": "rust-2",
+                "progress": invalid_progress
+            }))
+            .expect("serialize invalid progress");
+            assert!(matches!(
+                parse_event(Some(payload)),
+                Err(ClientError::Protocol(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn validates_structured_error_shape() {
+        let valid = serde_json::to_vec(&json!({
+            "protocol_version": 1,
+            "type": "error",
+            "request_id": "rust-3",
+            "engine_version": "fixture",
+            "error": {
+                "code": "invalid_params",
+                "message": "bad input",
+                "retryable": false,
+                "details": {"field": "joint_positions_rad"}
+            }
+        }))
+        .expect("serialize error");
+        assert!(matches!(
+            parse_event(Some(valid)),
+            Ok(Some((request_id, EngineEvent::Error(ClientError::Engine { code, .. }), true)))
+                if request_id == "rust-3" && code == "invalid_params"
+        ));
+
+        for invalid_error in [
+            json!({"code": "", "message": "bad input", "retryable": false}),
+            json!({"code": "invalid_params", "message": "", "retryable": false}),
+            json!({"code": "invalid_params", "message": "bad input", "retryable": 0}),
+            json!({
+                "code": "invalid_params",
+                "message": "bad input",
+                "retryable": false,
+                "details": []
+            }),
+            json!({
+                "code": "invalid_params",
+                "message": "bad input",
+                "retryable": false,
+                "future": true
+            }),
+        ] {
+            let payload = serde_json::to_vec(&json!({
+                "protocol_version": 1,
+                "type": "error",
+                "request_id": "rust-3",
+                "engine_version": "fixture",
+                "error": invalid_error
+            }))
+            .expect("serialize invalid error");
+            assert!(matches!(
+                parse_event(Some(payload)),
+                Err(ClientError::Protocol(_))
+            ));
+        }
+    }
+
+    #[test]
     fn validates_method_contract() {
         assert!(validate_method("engine.health").is_ok());
         assert!(validate_method("Engine.Health").is_err());
         assert!(validate_method("").is_err());
+    }
+
+    #[test]
+    fn validates_request_id_contract() {
+        assert!(validate_request_id("rust-1:child_2").is_ok());
+        assert!(validate_request_id("").is_err());
+        assert!(validate_request_id("has space").is_err());
+        assert!(validate_request_id(&"x".repeat(129)).is_err());
     }
 }
