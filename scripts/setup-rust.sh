@@ -8,12 +8,16 @@ task_rust_home="${task_repo_dir}/build/tools/rustup"
 task_cargo_home="${task_repo_dir}/build/tools/cargo"
 task_tmp_dir="${task_repo_dir}/build/tmp"
 task_rust_version="1.97.1"
-task_rustup_dist_server="${RUSTUP_DIST_SERVER:-https://mirrors.ustc.edu.cn/rust-static}"
-task_rustup_update_root="${RUSTUP_UPDATE_ROOT:-https://mirrors.ustc.edu.cn/rust-static/rustup}"
+task_rustup_bootstrap_server="${RUSTUP_DIST_SERVER:-}"
 
 cd "${task_repo_dir}"
 
 if [[ ! -x "${task_cargo_home}/bin/rustup" && ! -f "${task_bootstrap}" ]]; then
+  if [[ -z "${task_rustup_bootstrap_server}" ]]; then
+    echo "RUSTUP_DIST_SERVER must be set when bootstrapping rustup" >&2
+    exit 1
+  fi
+  task_rustup_bootstrap_server="${task_rustup_bootstrap_server%/}"
   case "$(uname -s)-$(uname -m)" in
     Darwin-arm64) task_rustup_target="aarch64-apple-darwin" ;;
     Darwin-x86_64) task_rustup_target="x86_64-apple-darwin" ;;
@@ -27,18 +31,15 @@ if [[ ! -x "${task_cargo_home}/bin/rustup" && ! -f "${task_bootstrap}" ]]; then
   mkdir -p "$(dirname "${task_bootstrap}")" "${task_tmp_dir}"
   curl --fail --location --proto '=https' --tlsv1.2 \
     --output "${task_bootstrap}" \
-    "${task_rustup_dist_server}/rustup/dist/${task_rustup_target}/rustup-init"
+    "${task_rustup_bootstrap_server}/rustup/dist/${task_rustup_target}/rustup-init"
 fi
 
 mkdir -p "${task_tmp_dir}"
 export RUSTUP_HOME="${task_rust_home}"
 export CARGO_HOME="${task_cargo_home}"
-export RUSTUP_DIST_SERVER="${task_rustup_dist_server}"
-export RUSTUP_UPDATE_ROOT="${task_rustup_update_root}"
 export TMPDIR="${task_tmp_dir}"
 export PATH="${task_cargo_home}/bin:${PATH}"
 
-echo "Rustup mirror: ${RUSTUP_DIST_SERVER}"
 echo "Repository-local Rust home: ${RUSTUP_HOME}"
 echo "Repository-local Cargo home: ${CARGO_HOME}"
 

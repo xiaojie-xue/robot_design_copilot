@@ -1,11 +1,5 @@
 [build]
 target-dir = "build/rust-target"
 
-[source.crates-io]
-replace-with = "ustc-sparse"
-
-[source.ustc-sparse]
-registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
-
 [net]
 retry = 3
