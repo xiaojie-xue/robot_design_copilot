@@ -16,7 +16,7 @@ packaging.
 - The React/Tauri, Rust lifecycle, and C++ engine boundaries are implemented.
 - The engine links the selected Eigen, Pinocchio, Ceres, and JSON dependencies.
 - The sidecar protocol covers framing, request IDs, errors, progress,
-  cancellation, and version rejection.
+  cancellation, and invalid-envelope rejection.
 - Windows, macOS, and Linux build toolchains and CI jobs are defined.
 - Architecture ADRs and dependency/license records are committed.
 

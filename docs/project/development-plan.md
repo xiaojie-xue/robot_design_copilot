@@ -9,7 +9,7 @@ accepted. The minimum engineering calculation starts at M1.
 
 1. Deliver runnable vertical slices and keep `main` buildable.
 2. Keep the TypeScript, Rust, and C++ boundaries defined in ADR-0001.
-3. Keep engineering algorithms in C++ and expose them through a versioned,
+3. Keep engineering algorithms in C++ and expose them through a stable,
    automation-friendly interface.
 4. Treat units, frames, assumptions, solver status, and validation evidence as
    part of every result.
@@ -35,7 +35,7 @@ the integration and release stage for the complete workflow.
 ## M0 — Existing architecture baseline
 
 M0 retains its original milestone scope and implementation. Current reusable
-evidence includes bounded IPC framing, protocol-v1 validation, structured
+evidence includes bounded IPC framing, protocol validation, structured
 errors, request progress and cancellation, C++ process sessions, the Rust
 lifecycle client, Pinocchio/Ceres/Eigen integration, forward kinematics, and the
 Tauri/React scaffold.
@@ -44,7 +44,7 @@ The revised G0 review concentrates on:
 
 - Accepted TypeScript, Rust, and C++ ownership boundaries
 - Selected native dependencies and recorded licenses
-- Versioned sidecar IPC and process isolation
+- Stable sidecar IPC and process isolation
 - Windows, macOS, and Linux toolchain and CI feasibility
 - Explicit ownership of remaining bundling and installer risks by M5
 
@@ -56,15 +56,19 @@ inspection, clean-system install tests, or full desktop workflow E2E.
 M1 is one input, two connected calculations, and one structured result. It must
 be executable through a CLI or direct engine request without launching Tauri.
 
+Implementation status: the local calculation, fixtures, schemas, CLI/protocol
+entry points, and independent reference tests are complete. M1 is in G1 review;
+cross-platform structured-result comparison remains pending.
+
 ### M1.1 — Minimum input and result contract
 
-- Define a versioned schema for workspace targets, orientation coverage, joint
+- Define schemas for workspace targets, orientation coverage, joint
   limits, link-length bounds, payload, TCP velocity and acceleration limits,
   mass properties, gravity, evaluation cases, transmissions, and safety factors.
 - Reuse repository SI-unit and coordinate-frame conventions.
 - Define success, infeasible, invalid-input, under-specified, and non-converged
   states.
-- Include provenance, solver version, residuals, warnings, and validation status.
+- Include provenance, solver identifier, residuals, warnings, and validation status.
 - Commit feasible and infeasible reference inputs before tuning the solver.
 
 Done when schema and fixture tests reject ambiguous units, missing required

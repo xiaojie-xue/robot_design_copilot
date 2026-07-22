@@ -20,7 +20,7 @@ Engineering algorithms have one C++ implementation. Rust may validate protocol s
 
 - Each language has one distinct responsibility.
 - The engineering core remains independently testable.
-- The repository must maintain three toolchains and a versioned protocol.
+- The repository must maintain three toolchains and a stable protocol.
 - Language-private types cannot cross process boundaries.
 
 ## Alternatives considered

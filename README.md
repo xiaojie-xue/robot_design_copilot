@@ -48,7 +48,7 @@ The language model handles requirement capture, follow-up questions, and explana
 | Desktop | Tauri 2 / Rust |
 | UI and 3D | React, TypeScript, Three.js |
 | Engineering core | C++20, Pinocchio, Eigen, Ceres |
-| Local API and schemas | Versioned JSON over framed IPC |
+| Local API and schemas | Structured JSON over framed IPC |
 | CAD and simulation | CadQuery, MuJoCo |
 | Storage | SQLite |
 
@@ -75,10 +75,12 @@ See the [project roadmap](docs/project/roadmap.md), [architecture overview](docs
 
 Development retains the original M0 platform baseline. Its narrowed G0 review
 confirms the architecture and three-platform build direction without requiring
-finished desktop packaging. M1 then delivers a minimal executable that derives
+finished desktop packaging. The first design calculation derives
 link lengths from workspace requirements and per-joint requirements from the
-resulting geometry, payload, and motion limits. The current sidecar implements
-bounded IPC framing, protocol-v1 validation,
+resulting geometry, payload, and motion limits. The chain is available through
+the direct `robot-engine-design` executable and framed `design.calculate`
+request; see the [calculation guide](docs/engineering/design-calculation.md). The current sidecar implements
+bounded IPC framing and envelope validation,
 structured errors, and an `engine.health` request. Its C++ request session runs
 concurrent jobs, serializes progress and terminal envelopes, propagates
 cooperative cancellation, and joins workers on shutdown. The Rust lifecycle client owns the isolated
@@ -103,6 +105,12 @@ bash scripts/test-engine.sh
 The script configures `build/core`, reuses the repository-local Conan toolchain
 when available, runs the unit binaries directly, performs a
 real framed sidecar health exchange, and checks the committed protocol JSON.
+It also runs feasible/infeasible design cases, analytic dynamics references, error
+paths, and reproducibility checks. Inspect the structured result directly with:
+
+```shell
+build/core/engine/robot-engine-design tests/golden/design_calculation/feasible-input.json
+```
 
 The robotics dependency set is installed into a repository-local Conan home:
 

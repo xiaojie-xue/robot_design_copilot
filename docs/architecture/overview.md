@@ -43,7 +43,7 @@ User description
 2. Rust does not duplicate C++ engineering algorithms.
 3. The C++ engine does not store API keys or call language models.
 4. AI cannot write an accepted `DesignSpec` directly.
-5. Cross-language interfaces use versioned data contracts, not private language types.
+5. Cross-language interfaces use explicit data contracts, not private language types.
 6. The engineering core uses SI units.
 
 ## M0 desktop command boundary

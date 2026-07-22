@@ -21,7 +21,7 @@ delivery order becomes computation first, then product functions, AI support,
 | Milestone | Outcome | Required gate | Status |
 | --- | --- | --- | --- |
 | [M0](milestones/M0-architecture-baseline.md) | Cross-platform architecture baseline and minimal C++ engine path | [G0](gates/G0-platform-feasibility.md) | In progress |
-| [M1](milestones/M1-minimum-calculation.md) | Minimal executable link-length and joint-dynamics calculation | [G1](gates/G1-calculation-proof.md) | Planned |
+| [M1](milestones/M1-minimum-calculation.md) | Minimal executable link-length and joint-dynamics calculation | [G1](gates/G1-calculation-proof.md) | Gate review |
 | [M2](milestones/M2-functional-workflow.md) | Complete deterministic design workflow and engineering functions | [G2](gates/G2-functional-trust.md) | Planned |
 | [M3](milestones/M3-ai-assistance.md) | Reviewable AI-assisted requirement refinement and explanation | [G3](gates/G3-ai-safety.md) | Planned |
 | [M4](milestones/M4-3d-preview.md) | Engine-derived interactive 3D preview | — | Planned |
@@ -38,7 +38,7 @@ complete desktop product workflow; those are M5/G4 outcomes.
 ## M1 minimum calculation chain
 
 M1 must run without a packaged desktop application. A CLI or direct engine
-request accepts one versioned input and produces one structured result:
+request accepts one structured input and produces one structured result:
 
 ```text
 workspace requirements

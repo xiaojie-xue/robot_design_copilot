@@ -1,6 +1,6 @@
 # M1 — Minimum Executable Calculation
 
-Status: Planned
+Status: Gate review
 
 Required gate: [G1 — Calculation Proof](../gates/G1-calculation-proof.md)
 
@@ -12,7 +12,7 @@ maximum TCP velocity and acceleration.
 
 ## In scope
 
-- Versioned minimum input and result contract with explicit units and frames
+- Minimum input and result contract with explicit units and frames
 - Bounded link-length optimization for a parametric seven-axis arm
 - FK/IK verification of requested target points or workspace regions
 - Explicit feasible, infeasible, invalid, and non-converged outcomes
@@ -29,7 +29,7 @@ maximum TCP velocity and acceleration.
 
 ## Deliverables
 
-- Versioned M1 input and output schemas
+- M1 input and output schemas
 - Feasible and infeasible reference fixtures
 - C++ solver and direct CLI or engine entry point
 - Golden, analytic, error-path, and reproducibility tests
@@ -43,12 +43,12 @@ cases, warnings, and per-joint results.
 
 ## Completion criteria
 
-- [ ] Link-length output feeds dynamics without manual re-entry.
-- [ ] Requested workspace coverage is verified rather than inferred from reach.
-- [ ] Every dynamic result is traceable to mass properties and an evaluation
+- [x] Link-length output feeds dynamics without manual re-entry.
+- [x] Requested workspace coverage is verified rather than inferred from reach.
+- [x] Every dynamic result is traceable to mass properties and an evaluation
   posture or trajectory.
-- [ ] Independent reference checks pass within documented tolerances.
-- [ ] Invalid, under-specified, non-finite, and unconverged cases cannot succeed.
-- [ ] Results record input revision, solver version, units, frames, assumptions,
+- [x] Independent local reference checks pass within documented tolerances.
+- [x] Invalid, under-specified, non-finite, and unconverged cases cannot succeed.
+- [x] Results record input revision, solver identifier, units, frames, assumptions,
   residuals, warnings, and validation status.
-- [ ] G1 passes.
+- [ ] G1 passes (cross-platform structured comparison and review remain).

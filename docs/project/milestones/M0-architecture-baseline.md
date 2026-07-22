@@ -13,7 +13,7 @@ A minimal TypeScript–Rust–C++ path builds and runs on Windows, macOS, and Li
 - [x] C++20 core and engine executable
 - [x] Minimal Eigen, Pinocchio, and Ceres integration
 - [x] Length-prefixed stdin/stdout IPC
-- [x] Request IDs, errors, progress, cancellation, and protocol versioning
+- [x] Request IDs, errors, progress, cancellation, and envelope validation
 - [ ] Three-platform full-application CI smoke builds. The core/lifecycle matrix
   exists, but robotics-enabled desktop build and package jobs remain open.
 
@@ -37,7 +37,7 @@ A minimal TypeScript–Rust–C++ path builds and runs on Windows, macOS, and Li
 
 - [x] The desktop UI accepts and validates seven joint positions.
 - [x] The C++ protocol path computes `base_T_tool0` with Pinocchio.
-- [x] The React result view renders versioned translation and xyzw orientation.
+- [x] The React result view renders translation and xyzw orientation.
 - [ ] Run the complete desktop path and close it without leaving an engine
   process; this requires an environment that permits the app to spawn its
   sidecar.
@@ -49,5 +49,5 @@ A minimal TypeScript–Rust–C++ path builds and runs on Windows, macOS, and Li
 - [ ] Engine failure does not terminate the UI process. Process isolation,
   restart, and structured error mapping are implemented; desktop crash-path
   evidence remains pending.
-- [x] IPC error, timeout, cancellation, and version paths are tested locally.
+- [x] IPC error, timeout, cancellation, and validation paths are tested locally.
 - [ ] G0 passes.
