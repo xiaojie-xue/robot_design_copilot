@@ -3,6 +3,13 @@ build/
 CMakeUserPresets.json
 out/
 cmake-build-*/
+dist/
+node_modules/
+.pnpm-store/
+src-tauri/target/
+src-tauri/binaries/robot-engine-cli-*
+__pycache__/
+*.pyc
 
 # IDE and operating-system files
 .DS_Store
