@@ -2,6 +2,7 @@ add_library(robot-engine-core STATIC
   src/dependencies.cpp
   src/protocol/handler.cpp
   src/protocol/frame.cpp
+  src/protocol/session.cpp
 )
 
 if(ROBOT_ENGINE_ENABLE_ROBOTICS)
@@ -17,7 +18,7 @@ target_include_directories(robot-engine-core
 )
 target_link_libraries(
   robot-engine-core
-  PRIVATE Eigen3::Eigen nlohmann_json::nlohmann_json
+  PRIVATE Eigen3::Eigen nlohmann_json::nlohmann_json Threads::Threads
 )
 
 if(ROBOT_ENGINE_ENABLE_ROBOTICS)
@@ -68,6 +69,15 @@ if(BUILD_TESTING)
       ROBOT_PROTOCOL_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/protocol/v1/examples"
   )
   add_test(NAME robot-engine-protocol-tests COMMAND robot-engine-protocol-tests)
+
+  add_executable(robot-engine-session-tests
+    tests/session_test.cpp
+  )
+  target_link_libraries(
+    robot-engine-session-tests
+    PRIVATE robot::engine-core nlohmann_json::nlohmann_json
+  )
+  add_test(NAME robot-engine-session-tests COMMAND robot-engine-session-tests)
 
   if(ROBOT_ENGINE_ENABLE_ROBOTICS)
     add_executable(robot-engine-kinematics-tests

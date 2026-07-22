@@ -1,5 +1,5 @@
 #include "robot_engine/protocol/frame.hpp"
-#include "robot_engine/protocol/handler.hpp"
+#include "robot_engine/protocol/session.hpp"
 
 #include <iostream>
 
@@ -17,21 +17,26 @@ void configure_binary_standard_streams() {
 #endif
 }
 
-}  // namespace
+} // namespace
 
 int main() {
-  using robot_engine::protocol::FrameStatus;
+  using robot_engine::protocol::EngineSession;
   using robot_engine::protocol::frame_status_name;
-  using robot_engine::protocol::handle_message;
+  using robot_engine::protocol::FrameStatus;
   using robot_engine::protocol::read_frame;
   using robot_engine::protocol::write_frame;
 
   configure_binary_standard_streams();
 
+  EngineSession session([](const std::string_view envelope) {
+    return write_frame(std::cout, envelope) == FrameStatus::ok;
+  });
+
   while (true) {
     auto frame = read_frame(std::cin);
     if (frame.status == FrameStatus::end_of_stream) {
-      return 0;
+      session.finish();
+      return session.output_ok() ? 0 : 3;
     }
     if (!frame.ok()) {
       std::cerr << "protocol framing error: " << frame_status_name(frame.status)
@@ -39,11 +44,9 @@ int main() {
       return 2;
     }
 
-    const auto response = handle_message(frame.payload);
-    const auto write_status = write_frame(std::cout, response);
-    if (write_status != FrameStatus::ok) {
-      std::cerr << "protocol write error: " << frame_status_name(write_status)
-                << '\n';
+    session.accept(frame.payload);
+    if (!session.output_ok()) {
+      std::cerr << "protocol write error\n";
       return 3;
     }
   }

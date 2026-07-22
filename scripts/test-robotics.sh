@@ -27,6 +27,7 @@ source "${task_generators_dir}/conanrun.sh"
 
 "${task_build_dir}/engine/robot-engine-frame-tests"
 "${task_build_dir}/engine/robot-engine-protocol-tests"
+"${task_build_dir}/engine/robot-engine-session-tests"
 "${task_build_dir}/engine/robot-engine-kinematics-tests"
 
 python3 engine/tests/cli_pipe_fixture.py emit-health \

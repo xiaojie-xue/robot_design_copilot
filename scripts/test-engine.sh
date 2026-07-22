@@ -29,6 +29,7 @@ cmake --build "${task_build_dir}" --parallel
 
 "${task_build_dir}/engine/robot-engine-frame-tests"
 "${task_build_dir}/engine/robot-engine-protocol-tests"
+"${task_build_dir}/engine/robot-engine-session-tests"
 
 python3 engine/tests/cli_pipe_fixture.py emit-health \
   | "${task_build_dir}/engine/robot-engine-cli" \

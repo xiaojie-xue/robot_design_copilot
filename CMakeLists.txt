@@ -10,6 +10,8 @@ project(
 include(CTest)
 include(FetchContent)
 
+find_package(Threads REQUIRED)
+
 option(
   ROBOT_ENGINE_FETCH_DEPENDENCIES
   "Download missing C++ dependencies during configure"

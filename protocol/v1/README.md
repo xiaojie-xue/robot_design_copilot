@@ -35,6 +35,17 @@ Cancellation is best-effort. A request completes with either a response or an
 error; progress events do not complete it. Unsupported protocol versions and
 methods produce structured errors rather than terminating the sidecar.
 
+The C++ request session accepts frames on one reader thread and executes valid
+request IDs as independent jobs. Complete output envelopes are serialized, so
+their bytes never interleave even when responses finish out of input order. A
+duplicate in-flight ID completes with `duplicate_request`. Long-running handlers
+receive a stop token and a progress callback; after a valid matching `cancel`,
+cooperative work completes with `request_cancelled`. A valid cancellation has no
+separate acknowledgement, and cancellation of an unknown or already completed
+request is ignored. A normal input EOF drains accepted work and joins every
+remaining worker before the sidecar exits; framing/output failure requests
+cancellation before joining.
+
 `robot-engine-cli` currently implements semantic validation, structured errors,
 request correlation, protocol-version enforcement, and `engine.health`.
 Robotics-enabled builds also expose `kinematics.forward` with the following
@@ -53,5 +64,8 @@ than a production arm definition. See the committed `forward-request.json` and
 `forward-response.json` examples.
 
 `robot-engine-transport-echo` remains a framing-only diagnostic executable.
-Progress, cancellation, and additional engineering methods are subsequent M0
-work.
+The Rust `engine-client` owns request matching and validates complete inbound
+response, progress, and error envelopes against these protocol-v1 field and
+value constraints. It sends best-effort cancellation after a timeout. Additional
+engineering methods will use the C++ session's cooperative progress and
+cancellation context in subsequent milestones.
