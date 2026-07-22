@@ -30,14 +30,23 @@ cmake --build "${task_build_dir}" --parallel
 "${task_build_dir}/engine/robot-engine-frame-tests"
 "${task_build_dir}/engine/robot-engine-protocol-tests"
 "${task_build_dir}/engine/robot-engine-session-tests"
+"${task_build_dir}/engine/robot-engine-design-tests"
 
 python3 engine/tests/cli_pipe_fixture.py emit-health \
   | "${task_build_dir}/engine/robot-engine-cli" \
   | python3 engine/tests/cli_pipe_fixture.py verify-health
 
-python3 -m json.tool protocol/v1/envelope.schema.json >/dev/null
-for task_fixture in protocol/v1/examples/*.json; do
+python3 -m json.tool protocol/envelope.schema.json >/dev/null
+for task_fixture in protocol/examples/*.json; do
   python3 -m json.tool "${task_fixture}" >/dev/null
 done
+python3 -m json.tool protocol/design-input.schema.json >/dev/null
+python3 -m json.tool protocol/design-result.schema.json >/dev/null
+for task_fixture in tests/golden/design_calculation/*.json; do
+  python3 -m json.tool "${task_fixture}" >/dev/null
+done
+
+"${task_build_dir}/engine/robot-engine-design" tests/golden/design_calculation/feasible-input.json \
+  | python3 -c 'import json,sys; result=json.load(sys.stdin); assert result["status"] == "success"'
 
 echo "All in-repository engine tests passed"

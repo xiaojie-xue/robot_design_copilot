@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://robot-design-copilot.dev/protocol/v1/envelope.schema.json",
-  "title": "Robot Engine Protocol v1 Envelope",
+  "$id": "https://robot-design-copilot.dev/protocol/envelope.schema.json",
+  "title": "Robot Engine Protocol Envelope",
   "oneOf": [
     { "$ref": "#/$defs/request" },
     { "$ref": "#/$defs/cancel" },
@@ -12,9 +12,8 @@
   "$defs": {
     "base": {
       "type": "object",
-      "required": ["protocol_version", "type", "request_id"],
+      "required": ["type", "request_id"],
       "properties": {
-        "protocol_version": { "const": 1 },
         "type": { "type": "string" },
         "request_id": {
           "oneOf": [

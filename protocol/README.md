@@ -1,7 +1,7 @@
-# Engine Protocol v1
+# Engine Protocol
 
-Protocol v1 carries UTF-8 JSON messages between the Rust application process
-and the C++ engine sidecar.
+The engine protocol carries UTF-8 JSON messages between the Rust application
+process and the C++ engine sidecar.
 
 ## Framing
 
@@ -21,9 +21,8 @@ diagnostic logs go to standard error.
 ## Envelopes
 
 [`envelope.schema.json`](envelope.schema.json) defines requests, cancellations,
-progress, successful responses, and errors. Every message declares
-`protocol_version: 1`. Correlated messages carry the same non-empty
-`request_id`. An error caused before a valid request ID can be read uses a null
+progress, successful responses, and errors. Correlated messages carry the same
+non-empty `request_id`. An error caused before a valid request ID can be read uses a null
 `request_id` and cannot be matched to an in-flight request.
 
 Request IDs are 1-128 byte ASCII identifiers matching
@@ -32,8 +31,8 @@ to 128 bytes, such as `engine.health`. Unknown envelope fields are rejected so
 schema drift is visible instead of silently ignored.
 
 Cancellation is best-effort. A request completes with either a response or an
-error; progress events do not complete it. Unsupported protocol versions and
-methods produce structured errors rather than terminating the sidecar.
+error; progress events do not complete it. Unsupported methods produce
+structured errors rather than terminating the sidecar.
 
 The C++ request session accepts frames on one reader thread and executes valid
 request IDs as independent jobs. Complete output envelopes are serialized, so
@@ -46,8 +45,14 @@ request is ignored. A normal input EOF drains accepted work and joins every
 remaining worker before the sidecar exits; framing/output failure requests
 cancellation before joining.
 
-`robot-engine-cli` currently implements semantic validation, structured errors,
-request correlation, protocol-version enforcement, and `engine.health`.
+`robot-engine-cli` implements semantic validation, structured errors, request
+correlation, `engine.health`, and `design.calculate`. The latter uses a
+complete design input document as the request `params` and returns the design
+result in the response `result`; see the schemas beside this document.
+Calculation outcomes are expressed as
+`success`, `infeasible`, `invalid_input`, or `non_converged` inside the result
+rather than as transport errors.
+
 Robotics-enabled builds also expose `kinematics.forward` with the following
 method-specific contract:
 
@@ -65,7 +70,7 @@ than a production arm definition. See the committed `forward-request.json` and
 
 `robot-engine-transport-echo` remains a framing-only diagnostic executable.
 The Rust `engine-client` owns request matching and validates complete inbound
-response, progress, and error envelopes against these protocol-v1 field and
-value constraints. It sends best-effort cancellation after a timeout. Additional
+response, progress, and error envelopes against these field and value
+constraints. It sends best-effort cancellation after a timeout. Additional
 engineering methods will use the C++ session's cooperative progress and
 cancellation context in subsequent milestones.

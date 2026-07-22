@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-design-copilot.local/protocol/design-input.schema.json",
+  "title": "Design calculation input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "input_revision", "model_id", "units", "frames",
+    "geometry", "workspace", "joint_limits", "mass_properties",
+    "gravity_m_s2", "motion_limits", "evaluation_cases", "transmissions",
+    "safety_factors", "solver"
+  ],
+  "properties": {
+    "input_revision": { "type": "string", "minLength": 1 },
+    "model_id": { "const": "parametric_7dof" },
+    "units": {
+      "type": "object", "additionalProperties": false,
+      "required": ["length", "mass", "angle", "time", "torque", "power"],
+      "properties": {
+        "length": { "const": "m" }, "mass": { "const": "kg" },
+        "angle": { "const": "rad" }, "time": { "const": "s" },
+        "torque": { "const": "N*m" }, "power": { "const": "W" }
+      }
+    },
+    "frames": {
+      "type": "object", "additionalProperties": false,
+      "required": ["base", "tool"],
+      "properties": {
+        "base": { "type": "string", "minLength": 1 },
+        "tool": { "type": "string", "minLength": 1 }
+      }
+    },
+    "geometry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["base_height_m", "link_length_bounds_m"],
+      "properties": {
+        "base_height_m": { "$ref": "#/$defs/nonnegative" },
+        "link_length_bounds_m": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "prefixItems": [
+            { "$ref": "#/$defs/upperArmBound" },
+            { "$ref": "#/$defs/forearmBound" },
+            { "$ref": "#/$defs/wristBound" }
+          ],
+          "items": false
+        }
+      }
+    },
+    "workspace": {
+      "type": "object", "additionalProperties": false, "required": ["targets"],
+      "properties": {
+        "targets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } }
+      }
+    },
+    "joint_limits": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "items": { "$ref": "#/$defs/jointLimit" }
+    },
+    "mass_properties": {
+      "type": "object", "additionalProperties": false, "required": ["links", "payload"],
+      "properties": {
+        "links": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": { "$ref": "#/$defs/linkMass" }
+        },
+        "payload": { "$ref": "#/$defs/payload" }
+      }
+    },
+    "gravity_m_s2": { "$ref": "#/$defs/vector3" },
+    "motion_limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_tcp_linear_velocity_m_s", "max_tcp_angular_velocity_rad_s", "max_tcp_linear_acceleration_m_s2", "max_tcp_angular_acceleration_rad_s2"],
+      "properties": {
+        "max_tcp_linear_velocity_m_s": { "$ref": "#/$defs/positive" },
+        "max_tcp_angular_velocity_rad_s": { "$ref": "#/$defs/positive" },
+        "max_tcp_linear_acceleration_m_s2": { "$ref": "#/$defs/positive" },
+        "max_tcp_angular_acceleration_rad_s2": { "$ref": "#/$defs/positive" }
+      }
+    },
+    "evaluation_cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evaluationCase" } },
+    "transmissions": { "type": "array", "minItems": 7, "maxItems": 7, "items": { "$ref": "#/$defs/transmission" } },
+    "safety_factors": {
+      "type": "object", "additionalProperties": false, "required": ["gravity", "dynamic"],
+      "properties": { "gravity": { "type": "number", "minimum": 1 }, "dynamic": { "type": "number", "minimum": 1 } }
+    },
+    "solver": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_ik_iterations", "max_optimization_iterations", "step_tolerance"],
+      "properties": {
+        "max_ik_iterations": { "type": "integer", "minimum": 20, "maximum": 5000 },
+        "max_optimization_iterations": { "type": "integer", "minimum": 1, "maximum": 80 },
+        "step_tolerance": { "$ref": "#/$defs/positive" }
+      }
+    }
+  },
+  "$defs": {
+    "finite": { "type": "number" },
+    "positive": { "type": "number", "exclusiveMinimum": 0 },
+    "nonnegative": { "type": "number", "minimum": 0 },
+    "vector3": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/finite" } },
+    "quaternion": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/$defs/finite" } },
+    "linkBound": {
+      "type": "object", "additionalProperties": false, "required": ["id", "min", "max"],
+      "properties": { "id": { "type": "string" }, "min": { "$ref": "#/$defs/positive" }, "max": { "$ref": "#/$defs/positive" } }
+    },
+    "upperArmBound": { "allOf": [{ "$ref": "#/$defs/linkBound" }, { "properties": { "id": { "const": "upper_arm" } } }] },
+    "forearmBound": { "allOf": [{ "$ref": "#/$defs/linkBound" }, { "properties": { "id": { "const": "forearm" } } }] },
+    "wristBound": { "allOf": [{ "$ref": "#/$defs/linkBound" }, { "properties": { "id": { "const": "wrist" } } }] },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "frame_id", "position_m", "orientation_xyzw", "position_tolerance_m", "orientation_tolerance_rad"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "frame_id": { "type": "string", "minLength": 1 },
+        "position_m": { "$ref": "#/$defs/vector3" }, "orientation_xyzw": { "$ref": "#/$defs/quaternion" },
+        "position_tolerance_m": { "$ref": "#/$defs/positive" }, "orientation_tolerance_rad": { "$ref": "#/$defs/positive" }
+      }
+    },
+    "jointLimit": {
+      "type": "object", "additionalProperties": false, "required": ["id", "min_position_rad", "max_position_rad"],
+      "properties": { "id": { "type": "string", "pattern": "^joint_[1-7]$" }, "min_position_rad": { "$ref": "#/$defs/finite" }, "max_position_rad": { "$ref": "#/$defs/finite" } }
+    },
+    "linkMass": {
+      "type": "object", "additionalProperties": false, "required": ["id", "mass_kg", "com_fraction", "rotational_inertia_kg_m2"],
+      "properties": {
+        "id": { "enum": ["upper_arm", "forearm", "wrist"] }, "mass_kg": { "$ref": "#/$defs/positive" },
+        "com_fraction": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 }, "rotational_inertia_kg_m2": { "$ref": "#/$defs/nonnegative" }
+      }
+    },
+    "payload": {
+      "type": "object", "additionalProperties": false, "required": ["mass_kg", "com_tool_m", "inertia_diagonal_kg_m2"],
+      "properties": { "mass_kg": { "$ref": "#/$defs/positive" }, "com_tool_m": { "$ref": "#/$defs/vector3" }, "inertia_diagonal_kg_m2": { "$ref": "#/$defs/vector3" } }
+    },
+    "evaluationCase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "target_id", "linear_velocity_direction_base", "angular_velocity_axis_base", "linear_acceleration_direction_base", "angular_acceleration_axis_base"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "target_id": { "type": "string", "minLength": 1 },
+        "linear_velocity_direction_base": { "$ref": "#/$defs/vector3" }, "angular_velocity_axis_base": { "$ref": "#/$defs/vector3" },
+        "linear_acceleration_direction_base": { "$ref": "#/$defs/vector3" }, "angular_acceleration_axis_base": { "$ref": "#/$defs/vector3" }
+      }
+    },
+    "transmission": {
+      "type": "object", "additionalProperties": false, "required": ["joint_id", "ratio", "efficiency"],
+      "properties": { "joint_id": { "type": "string", "pattern": "^joint_[1-7]$" }, "ratio": { "$ref": "#/$defs/positive" }, "efficiency": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } }
+    }
+  }
+}

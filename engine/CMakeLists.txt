@@ -1,5 +1,10 @@
 add_library(robot-engine-core STATIC
   src/dependencies.cpp
+  src/design/calculation.cpp
+  src/design/input_contract.cpp
+  src/design/link_length_solver.cpp
+  src/dynamics/joint_requirements.cpp
+  src/kinematics/parametric_arm.cpp
   src/protocol/handler.cpp
   src/protocol/frame.cpp
   src/protocol/session.cpp
@@ -15,10 +20,13 @@ target_compile_features(robot-engine-core PUBLIC cxx_std_20)
 target_include_directories(robot-engine-core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_link_libraries(
   robot-engine-core
-  PRIVATE Eigen3::Eigen nlohmann_json::nlohmann_json Threads::Threads
+  PRIVATE Eigen3::Eigen Threads::Threads
+  PUBLIC nlohmann_json::nlohmann_json
 )
 
 if(ROBOT_ENGINE_ENABLE_ROBOTICS)
@@ -49,6 +57,13 @@ add_executable(robot-engine-cli
 )
 target_link_libraries(robot-engine-cli PRIVATE robot::engine-core)
 
+add_executable(robot-engine-design
+  src/cli/design_calculation.cpp
+)
+target_link_libraries(
+  robot-engine-design PRIVATE robot::engine-core nlohmann_json::nlohmann_json
+)
+
 if(BUILD_TESTING)
   add_executable(robot-engine-frame-tests
     tests/frame_test.cpp
@@ -66,7 +81,8 @@ if(BUILD_TESTING)
   target_compile_definitions(
     robot-engine-protocol-tests
     PRIVATE
-      ROBOT_PROTOCOL_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/protocol/v1/examples"
+      ROBOT_PROTOCOL_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/protocol/examples"
+      ROBOT_DESIGN_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/tests/golden/design_calculation"
   )
   add_test(NAME robot-engine-protocol-tests COMMAND robot-engine-protocol-tests)
 
@@ -78,6 +94,19 @@ if(BUILD_TESTING)
     PRIVATE robot::engine-core nlohmann_json::nlohmann_json
   )
   add_test(NAME robot-engine-session-tests COMMAND robot-engine-session-tests)
+
+  add_executable(robot-engine-design-tests
+    tests/design_calculation_test.cpp
+  )
+  target_link_libraries(
+    robot-engine-design-tests
+    PRIVATE robot::engine-core nlohmann_json::nlohmann_json
+  )
+  target_compile_definitions(
+    robot-engine-design-tests
+    PRIVATE ROBOT_DESIGN_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/tests/golden/design_calculation"
+  )
+  add_test(NAME robot-engine-design-tests COMMAND robot-engine-design-tests)
 
   if(ROBOT_ENGINE_ENABLE_ROBOTICS)
     add_executable(robot-engine-kinematics-tests
@@ -94,5 +123,13 @@ if(BUILD_TESTING)
       ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_integration_test.py
       $<TARGET_FILE:robot-engine-cli>
+  )
+  add_test(
+    NAME robot-engine-design-cli-integration
+    COMMAND
+      ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/design_calculation_cli_integration_test.py
+      $<TARGET_FILE:robot-engine-design>
+      ${PROJECT_SOURCE_DIR}/tests/golden/design_calculation
   )
 endif()

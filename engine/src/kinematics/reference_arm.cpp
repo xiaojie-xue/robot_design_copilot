@@ -39,7 +39,7 @@ add_joint(Model &model, const JointIndex parent, const JointModel &joint,
 [[nodiscard]] ReferenceModel make_reference_model() {
   ReferenceModel reference;
   auto &model = reference.model;
-  model.name = "reference_arm_7dof_v1";
+  model.name = "reference_arm_7dof";
 
   JointIndex parent = 0;
   parent = add_joint(model, parent, pinocchio::JointModelRZ{},

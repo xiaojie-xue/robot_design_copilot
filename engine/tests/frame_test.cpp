@@ -11,7 +11,7 @@ using robot_engine::protocol::FrameStatus;
 using robot_engine::protocol::read_frame;
 using robot_engine::protocol::write_frame;
 
-void require(const bool condition, const std::string& message) {
+void require(const bool condition, const std::string &message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
     std::exit(1);
@@ -19,7 +19,7 @@ void require(const bool condition, const std::string& message) {
 }
 
 void test_round_trip() {
-  constexpr auto payload = R"({"protocol_version":1,"type":"request"})";
+  constexpr auto payload = R"({"type":"request"})";
   std::stringstream stream;
   require(write_frame(stream, payload) == FrameStatus::ok,
           "write_frame accepts a valid payload");
@@ -78,7 +78,7 @@ void test_write_failure() {
           "stream write failures are reported");
 }
 
-}  // namespace
+} // namespace
 
 int main() {
   test_round_trip();

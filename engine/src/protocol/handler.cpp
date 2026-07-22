@@ -1,6 +1,7 @@
 #include "robot_engine/protocol/handler.hpp"
 
 #include "robot_engine/dependencies.hpp"
+#include "robot_engine/design/calculation.hpp"
 
 #ifdef ROBOT_ENGINE_WITH_ROBOTICS
 #include "robot_engine/kinematics/reference_arm.hpp"
@@ -93,7 +94,6 @@ constexpr std::size_t kMaxMethodLength = 128;
   }
 
   return {
-      {"protocol_version", kProtocolVersion},
       {"type", "error"},
       {"request_id", std::move(request_id)},
       {"engine_version", engine_version()},
@@ -108,18 +108,6 @@ constexpr std::size_t kMaxMethodLength = 128;
   }
 
   const auto request_id = request_id_or_null(message);
-  if (!message.contains("protocol_version") ||
-      !message["protocol_version"].is_number_integer()) {
-    return error_response(request_id, "invalid_request",
-                          "protocol_version must be an integer.");
-  }
-  if (message["protocol_version"] != kProtocolVersion) {
-    return error_response(request_id, "unsupported_protocol_version",
-                          "The requested protocol version is not supported.",
-                          false,
-                          {{"received", message["protocol_version"]},
-                           {"supported", Json::array({kProtocolVersion})}});
-  }
   if (!valid_request_id(message.value("request_id", Json{}))) {
     return error_response(
         nullptr, "invalid_request",
@@ -141,8 +129,8 @@ constexpr std::size_t kMaxMethodLength = 128;
                           "params must be a JSON object.");
   }
 
-  constexpr std::array<std::string_view, 5> allowed_fields{
-      "protocol_version", "type", "request_id", "method", "params"};
+  constexpr std::array<std::string_view, 4> allowed_fields{"type", "request_id",
+                                                           "method", "params"};
   for (auto iterator = message.begin(); iterator != message.end(); ++iterator) {
     if (std::find(allowed_fields.begin(), allowed_fields.end(),
                   iterator.key()) == allowed_fields.end()) {
@@ -161,7 +149,7 @@ constexpr std::size_t kMaxMethodLength = 128;
   if (method == "engine.health") {
     const auto versions = dependency_versions();
     const auto dependencies_ok = dependency_smoke_check();
-    Json capabilities = Json::array({"engine.health"});
+    Json capabilities = Json::array({"engine.health", "design.calculate"});
     Json dependencies{
         {"eigen", versions.eigen},
         {"nlohmann_json", versions.nlohmann_json},
@@ -172,18 +160,25 @@ constexpr std::size_t kMaxMethodLength = 128;
     dependencies["ceres"] = versions.ceres;
 #endif
     return {
-        {"protocol_version", kProtocolVersion},
         {"type", "response"},
         {"request_id", request_id},
         {"engine_version", engine_version()},
         {"result",
          {
              {"status", dependencies_ok ? "ok" : "degraded"},
-             {"protocol_version", kProtocolVersion},
              {"capabilities", std::move(capabilities)},
              {"dependencies", std::move(dependencies)},
              {"dependency_smoke_check", dependencies_ok},
          }},
+    };
+  }
+
+  if (method == "design.calculate") {
+    return {
+        {"type", "response"},
+        {"request_id", request_id},
+        {"engine_version", engine_version()},
+        {"result", design::calculate(request.at("params"))},
     };
   }
 
@@ -233,13 +228,12 @@ constexpr std::size_t kMaxMethodLength = 128;
 
     const auto pose = kinematics::forward_reference_arm(joints);
     return {
-        {"protocol_version", kProtocolVersion},
         {"type", "response"},
         {"request_id", request_id},
         {"engine_version", engine_version()},
         {"result",
          {
-             {"model_id", "reference_arm_7dof_v1"},
+             {"model_id", "reference_arm_7dof"},
              {"base_frame", "base"},
              {"tool_frame", "tool0"},
              {"joint_count", kinematics::kReferenceArmJointCount},

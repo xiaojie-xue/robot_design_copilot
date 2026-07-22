@@ -39,7 +39,6 @@ def main() -> int:
     process.stdin.write(
         frame(
             {
-                "protocol_version": 1,
                 "type": "request",
                 "request_id": "integration-health",
                 "method": "engine.health",
@@ -56,7 +55,6 @@ def main() -> int:
     process.stdin.write(
         frame(
             {
-                "protocol_version": 1,
                 "type": "request",
                 "request_id": "integration-missing",
                 "method": "engine.missing",

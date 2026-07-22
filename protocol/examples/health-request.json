@@ -1,5 +1,4 @@
 {
-  "protocol_version": 1,
   "type": "request",
   "request_id": "health-1",
   "method": "engine.health",

@@ -1,10 +1,9 @@
 {
-  "protocol_version": 1,
   "type": "response",
   "request_id": "fk-zero",
   "engine_version": "0.1.0",
   "result": {
-    "model_id": "reference_arm_7dof_v1",
+    "model_id": "reference_arm_7dof",
     "base_frame": "base",
     "tool_frame": "tool0",
     "joint_count": 7,

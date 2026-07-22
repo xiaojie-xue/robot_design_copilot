@@ -58,7 +58,6 @@ private:
 std::string response_for(const std::string_view request) {
   const auto envelope = Json::parse(request);
   return Json{
-      {"protocol_version", 1},
       {"type", "response"},
       {"request_id", envelope.at("request_id")},
       {"engine_version", "fixture"},
@@ -78,7 +77,7 @@ void test_progress_precedes_terminal_response() {
       });
 
   session.accept(
-      R"({"protocol_version":1,"type":"request","request_id":"progress-1","method":"engine.fixture","params":{}})");
+      R"({"type":"request","request_id":"progress-1","method":"engine.fixture","params":{}})");
   require(collector.wait_for_size(2),
           "progress request produces progress and a terminal response");
   session.shutdown();
@@ -120,11 +119,11 @@ void test_concurrent_responses_keep_request_ids() {
       });
 
   session.accept(
-      R"({"protocol_version":1,"type":"request","request_id":"concurrent-1","method":"engine.fixture","params":{}})");
+      R"({"type":"request","request_id":"concurrent-1","method":"engine.fixture","params":{}})");
   require(first_started_future.wait_for(2s) == std::future_status::ready,
           "first concurrent request starts");
   session.accept(
-      R"({"protocol_version":1,"type":"request","request_id":"concurrent-2","method":"engine.fixture","params":{}})");
+      R"({"type":"request","request_id":"concurrent-2","method":"engine.fixture","params":{}})");
   require(collector.wait_for_size(1),
           "second concurrent request can finish before the first");
   require(collector.snapshot()[0]["request_id"] == "concurrent-2",
@@ -161,11 +160,10 @@ void test_cancel_stops_in_flight_request() {
       });
 
   session.accept(
-      R"({"protocol_version":1,"type":"request","request_id":"cancel-1","method":"engine.fixture","params":{}})");
+      R"({"type":"request","request_id":"cancel-1","method":"engine.fixture","params":{}})");
   require(started_future.wait_for(2s) == std::future_status::ready,
           "cancellable request starts");
-  session.accept(
-      R"({"protocol_version":1,"type":"cancel","request_id":"cancel-1"})");
+  session.accept(R"({"type":"cancel","request_id":"cancel-1"})");
   require(collector.wait_for_size(2),
           "cancelled request produces a terminal error");
   session.shutdown();
@@ -201,13 +199,12 @@ void test_duplicate_in_flight_request_is_rejected() {
       });
 
   constexpr auto request =
-      R"({"protocol_version":1,"type":"request","request_id":"duplicate-1","method":"engine.fixture","params":{}})";
+      R"({"type":"request","request_id":"duplicate-1","method":"engine.fixture","params":{}})";
   session.accept(request);
   require(started_future.wait_for(2s) == std::future_status::ready,
           "first duplicate request starts");
   session.accept(request);
-  session.accept(
-      R"({"protocol_version":1,"type":"cancel","request_id":"duplicate-1"})");
+  session.accept(R"({"type":"cancel","request_id":"duplicate-1"})");
   require(collector.wait_for_size(2),
           "duplicate and cancelled original both complete");
   session.shutdown();
@@ -227,7 +224,7 @@ void test_invalid_cancel_is_rejected() {
       [&](const std::string_view message) { return collector.write(message); });
 
   session.accept(
-      R"({"protocol_version":1,"type":"cancel","request_id":"cancel-invalid","future":true})");
+      R"({"type":"cancel","request_id":"cancel-invalid","future":true})");
   require(collector.wait_for_size(1), "invalid cancel produces an error");
   session.shutdown();
 

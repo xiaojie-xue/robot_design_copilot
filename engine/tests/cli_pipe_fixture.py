@@ -30,7 +30,6 @@ def read_frame() -> dict:
 def emit_health() -> None:
     write_frame(
         {
-            "protocol_version": 1,
             "type": "request",
             "request_id": REQUEST_ID,
             "method": "engine.health",
@@ -42,7 +41,6 @@ def emit_health() -> None:
 def emit_forward() -> None:
     write_frame(
         {
-            "protocol_version": 1,
             "type": "request",
             "request_id": FORWARD_REQUEST_ID,
             "method": "kinematics.forward",
@@ -61,7 +59,7 @@ def verify_health(robotics: bool = False) -> None:
         "eigen": "3.4.1",
         "nlohmann_json": "3.12.0",
     }
-    expected_capabilities = ["engine.health"]
+    expected_capabilities = ["engine.health", "design.calculate"]
     if robotics:
         expected_dependencies.update(
             {
@@ -80,7 +78,7 @@ def verify_forward() -> None:
     assert response["type"] == "response"
     assert response["request_id"] == FORWARD_REQUEST_ID
     result = response["result"]
-    assert result["model_id"] == "reference_arm_7dof_v1"
+    assert result["model_id"] == "reference_arm_7dof"
     assert result["base_frame"] == "base"
     assert result["tool_frame"] == "tool0"
     assert result["joint_count"] == 7

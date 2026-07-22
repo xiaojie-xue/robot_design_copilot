@@ -1,0 +1,24 @@
+{
+  "source": "Closed-form straight-chain geometry and static moment-arm calculation for target reach_x",
+  "reference_precision": "IEEE-754 double; constants shown in feasible-input.json",
+  "tolerances": {
+    "link_length_abs_m": 0.00001,
+    "gravity_torque_abs_nm": 0.02,
+    "gravity_torque_rel": 0.003,
+    "twist_reconstruction_abs": 0.00001
+  },
+  "expected": {
+    "status": "success",
+    "coverage": 1.0,
+    "link_lengths_m": [0.35, 0.3, 0.165],
+    "reach_x_gravity_torque_magnitudes_nm": [49.3151911875, 20.1404074375, 5.4304324375],
+    "reach_x_tcp_velocity": {
+      "linear_y_m_s": 0.6,
+      "angular_z_rad_s": 1.2
+    },
+    "reach_x_tcp_acceleration": {
+      "linear_z_m_s2": 1.5,
+      "angular_y_rad_s2": 2.5
+    }
+  }
+}

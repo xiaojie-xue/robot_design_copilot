@@ -1,0 +1,87 @@
+{
+  "input_revision": "design-feasible",
+  "model_id": "parametric_7dof",
+  "units": { "length": "m", "mass": "kg", "angle": "rad", "time": "s", "torque": "N*m", "power": "W" },
+  "frames": { "base": "base", "tool": "tool0" },
+  "geometry": {
+    "base_height_m": 0.3,
+    "link_length_bounds_m": [
+      { "id": "upper_arm", "min": 0.2, "max": 0.5 },
+      { "id": "forearm", "min": 0.15, "max": 0.45 },
+      { "id": "wrist", "min": 0.08, "max": 0.25 }
+    ]
+  },
+  "workspace": {
+    "targets": [
+      {
+        "id": "reach_x",
+        "frame_id": "base",
+        "position_m": [0.815, 0.0, 0.3],
+        "orientation_xyzw": [0.0, 0.0, 0.0, 1.0],
+        "position_tolerance_m": 0.00001,
+        "orientation_tolerance_rad": 0.00001
+      },
+      {
+        "id": "reach_y",
+        "frame_id": "base",
+        "position_m": [0.0, 0.815, 0.3],
+        "orientation_xyzw": [0.0, 0.0, 0.7071067811865476, 0.7071067811865476],
+        "position_tolerance_m": 0.00001,
+        "orientation_tolerance_rad": 0.00001
+      }
+    ]
+  },
+  "joint_limits": [
+    { "id": "joint_1", "min_position_rad": -3.141592653589793, "max_position_rad": 3.141592653589793 },
+    { "id": "joint_2", "min_position_rad": -2.8, "max_position_rad": 2.8 },
+    { "id": "joint_3", "min_position_rad": -3.141592653589793, "max_position_rad": 3.141592653589793 },
+    { "id": "joint_4", "min_position_rad": -2.8, "max_position_rad": 2.8 },
+    { "id": "joint_5", "min_position_rad": -3.141592653589793, "max_position_rad": 3.141592653589793 },
+    { "id": "joint_6", "min_position_rad": -2.8, "max_position_rad": 2.8 },
+    { "id": "joint_7", "min_position_rad": -3.141592653589793, "max_position_rad": 3.141592653589793 }
+  ],
+  "mass_properties": {
+    "links": [
+      { "id": "upper_arm", "mass_kg": 4.0, "com_fraction": 0.5, "rotational_inertia_kg_m2": 0.04 },
+      { "id": "forearm", "mass_kg": 3.0, "com_fraction": 0.5, "rotational_inertia_kg_m2": 0.025 },
+      { "id": "wrist", "mass_kg": 1.5, "com_fraction": 0.5, "rotational_inertia_kg_m2": 0.008 }
+    ],
+    "payload": { "mass_kg": 2.0, "com_tool_m": [0.05, 0.0, 0.0], "inertia_diagonal_kg_m2": [0.01, 0.01, 0.005] }
+  },
+  "gravity_m_s2": [0.0, 0.0, -9.80665],
+  "motion_limits": {
+    "max_tcp_linear_velocity_m_s": 0.6,
+    "max_tcp_angular_velocity_rad_s": 1.2,
+    "max_tcp_linear_acceleration_m_s2": 1.5,
+    "max_tcp_angular_acceleration_rad_s2": 2.5
+  },
+  "evaluation_cases": [
+    {
+      "id": "x_lateral_motion",
+      "target_id": "reach_x",
+      "linear_velocity_direction_base": [0.0, 1.0, 0.0],
+      "angular_velocity_axis_base": [0.0, 0.0, 1.0],
+      "linear_acceleration_direction_base": [0.0, 0.0, 1.0],
+      "angular_acceleration_axis_base": [0.0, 1.0, 0.0]
+    },
+    {
+      "id": "y_vertical_motion",
+      "target_id": "reach_y",
+      "linear_velocity_direction_base": [0.0, 0.0, 1.0],
+      "angular_velocity_axis_base": [0.0, 1.0, 0.0],
+      "linear_acceleration_direction_base": [1.0, 0.0, 0.0],
+      "angular_acceleration_axis_base": [0.0, 0.0, 1.0]
+    }
+  ],
+  "transmissions": [
+    { "joint_id": "joint_1", "ratio": 100.0, "efficiency": 0.9 },
+    { "joint_id": "joint_2", "ratio": 100.0, "efficiency": 0.9 },
+    { "joint_id": "joint_3", "ratio": 80.0, "efficiency": 0.9 },
+    { "joint_id": "joint_4", "ratio": 80.0, "efficiency": 0.9 },
+    { "joint_id": "joint_5", "ratio": 60.0, "efficiency": 0.88 },
+    { "joint_id": "joint_6", "ratio": 60.0, "efficiency": 0.88 },
+    { "joint_id": "joint_7", "ratio": 50.0, "efficiency": 0.85 }
+  ],
+  "safety_factors": { "gravity": 1.5, "dynamic": 2.0 },
+  "solver": { "max_ik_iterations": 800, "max_optimization_iterations": 50, "step_tolerance": 0.000001 }
+}

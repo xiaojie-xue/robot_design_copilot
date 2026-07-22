@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-design-copilot.local/protocol/design-result.schema.json",
+  "title": "Design calculation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["input_revision", "solver_id", "engine_version", "status", "warnings", "validation"],
+  "properties": {
+    "input_revision": { "type": ["string", "null"] },
+    "solver_id": { "const": "design_solver" },
+    "engine_version": { "type": "string" },
+    "status": { "enum": ["success", "infeasible", "invalid_input", "non_converged"] },
+    "warnings": { "type": "array" },
+    "units": { "type": "object" },
+    "frames": { "type": "object" },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "solver": { "type": "object" },
+    "validation": {
+      "type": "object", "required": ["status", "checks", "issues"],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "checks": { "type": "array" }, "issues": { "type": "array" }
+      }
+    },
+    "geometry": { "type": "object" },
+    "workspace": { "type": "object" },
+    "dynamics": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "success" } } },
+      "then": { "required": ["units", "frames", "assumptions", "solver", "geometry", "workspace", "dynamics"] }
+    }
+  ]
+}

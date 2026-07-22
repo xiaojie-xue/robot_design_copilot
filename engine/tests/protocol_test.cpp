@@ -9,7 +9,10 @@
 #include <nlohmann/json.hpp>
 
 #ifndef ROBOT_PROTOCOL_FIXTURE_DIR
-#error "ROBOT_PROTOCOL_FIXTURE_DIR must point to protocol-v1 examples"
+#error "ROBOT_PROTOCOL_FIXTURE_DIR must point to protocol examples"
+#endif
+#ifndef ROBOT_DESIGN_FIXTURE_DIR
+#error "ROBOT_DESIGN_FIXTURE_DIR must point to design calculation fixtures"
 #endif
 
 namespace {
@@ -34,6 +37,12 @@ Json load_fixture(const std::string &name) {
   return Json::parse(input);
 }
 
+Json load_design_fixture(const std::string &name) {
+  std::ifstream input(std::string(ROBOT_DESIGN_FIXTURE_DIR) + "/" + name);
+  require(input.good(), "open design fixture " + name);
+  return Json::parse(input);
+}
+
 void test_committed_examples() {
   const auto health_request = load_fixture("health-request.json");
 #ifdef ROBOT_ENGINE_WITH_ROBOTICS
@@ -52,9 +61,7 @@ void test_committed_examples() {
   const auto forward_request = load_fixture("forward-request.json");
   const auto expected_forward = load_fixture("forward-response.json");
   const auto actual_forward = handle(forward_request.dump());
-  require(actual_forward["protocol_version"] ==
-                  expected_forward["protocol_version"] &&
-              actual_forward["type"] == expected_forward["type"] &&
+  require(actual_forward["type"] == expected_forward["type"] &&
               actual_forward["request_id"] == expected_forward["request_id"] &&
               actual_forward["engine_version"] ==
                   expected_forward["engine_version"] &&
@@ -86,14 +93,27 @@ void test_committed_examples() {
 #endif
 }
 
+void test_design_calculation() {
+  const auto input = load_design_fixture("feasible-input.json");
+  const Json request{{"type", "request"},
+                     {"request_id", "design-feasible"},
+                     {"method", "design.calculate"},
+                     {"params", input}};
+  const auto response = handle(request.dump());
+  require(response["type"] == "response",
+          "design calculation uses the protocol response envelope");
+  require(response["result"]["status"] == "success",
+          "design protocol entry point completes the calculation chain");
+  require(response["result"]["dynamics"]["joint_requirements"].size() == 7,
+          "design protocol result retains all joint requirements");
+}
+
 void test_health() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"health-1","method":"engine.health","params":{}})");
+      R"({"type":"request","request_id":"health-1","method":"engine.health","params":{}})");
   require(response["type"] == "response", "health returns a response");
   require(response["request_id"] == "health-1", "health preserves request ID");
   require(response["result"]["status"] == "ok", "health reports ok");
-  require(response["result"]["protocol_version"] == 1,
-          "health reports protocol version");
   require(response["result"]["dependencies"]["eigen"] == "3.4.1",
           "health reports the linked Eigen version");
   require(response["result"]["dependencies"]["nlohmann_json"] == "3.12.0",
@@ -102,13 +122,17 @@ void test_health() {
           "health reports successful dependency smoke check");
   require(response["engine_version"].is_string(),
           "health reports engine version");
+  require(response["result"]["capabilities"].size() >= 2 &&
+              response["result"]["capabilities"][1] == "design.calculate",
+          "health advertises the design calculation capability");
 #ifdef ROBOT_ENGINE_WITH_ROBOTICS
   require(response["result"]["dependencies"]["pinocchio"] == "3.8.0",
           "health reports the linked Pinocchio version");
   require(response["result"]["dependencies"]["ceres"] == "2.2.0",
           "health reports the linked Ceres version");
   require(response["result"]["capabilities"] ==
-              Json::array({"engine.health", "kinematics.forward"}),
+              Json::array(
+                  {"engine.health", "design.calculate", "kinematics.forward"}),
           "health reports robotics capability");
 #endif
 }
@@ -116,12 +140,12 @@ void test_health() {
 #ifdef ROBOT_ENGINE_WITH_ROBOTICS
 void test_forward_kinematics() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"fk-1","method":"kinematics.forward","params":{"joint_positions_rad":[0,0,0,0,0,0,0]}})");
+      R"({"type":"request","request_id":"fk-1","method":"kinematics.forward","params":{"joint_positions_rad":[0,0,0,0,0,0,0]}})");
   require(response["type"] == "response",
           "forward kinematics returns a response");
   require(response["request_id"] == "fk-1",
           "forward kinematics preserves request ID");
-  require(response["result"]["model_id"] == "reference_arm_7dof_v1",
+  require(response["result"]["model_id"] == "reference_arm_7dof",
           "forward kinematics identifies the reference model");
   require(response["result"]["translation_m"].size() == 3,
           "forward kinematics returns a translation vector");
@@ -131,14 +155,14 @@ void test_forward_kinematics() {
 
 void test_invalid_forward_params() {
   const auto wrong_count = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"fk-count","method":"kinematics.forward","params":{"joint_positions_rad":[0,0]}})");
+      R"({"type":"request","request_id":"fk-count","method":"kinematics.forward","params":{"joint_positions_rad":[0,0]}})");
   require(wrong_count["error"]["code"] == "invalid_params",
           "forward kinematics rejects the wrong joint count");
   require(wrong_count["error"]["details"]["expected_count"] == 7,
           "joint-count error declares the expected count");
 
   const auto wrong_type = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"fk-type","method":"kinematics.forward","params":{"joint_positions_rad":[0,0,0,"bad",0,0,0]}})");
+      R"({"type":"request","request_id":"fk-type","method":"kinematics.forward","params":{"joint_positions_rad":[0,0,0,"bad",0,0,0]}})");
   require(wrong_type["error"]["code"] == "invalid_params",
           "forward kinematics rejects nonnumeric joints");
   require(wrong_type["error"]["details"]["index"] == 3,
@@ -156,8 +180,7 @@ void test_invalid_json() {
 }
 
 void test_invalid_utf8() {
-  std::string input =
-      R"({"protocol_version":1,"type":"request","request_id":"bad-)";
+  std::string input = R"({"type":"request","request_id":"bad-)";
   input.push_back(static_cast<char>(0xFF));
   input += R"(","method":"engine.health","params":{}})";
   const auto response = handle(input);
@@ -165,20 +188,9 @@ void test_invalid_utf8() {
           "invalid UTF-8 is rejected as invalid JSON");
 }
 
-void test_unsupported_version() {
-  const auto response = handle(
-      R"({"protocol_version":2,"type":"request","request_id":"version-1","method":"engine.health","params":{}})");
-  require(response["request_id"] == "version-1",
-          "version error preserves a valid request ID");
-  require(response["error"]["code"] == "unsupported_protocol_version",
-          "unsupported version has a stable error code");
-  require(response["error"]["details"]["supported"] == Json::array({1}),
-          "version error declares supported versions");
-}
-
 void test_invalid_envelope() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"","method":"engine.health","params":{}})");
+      R"({"type":"request","request_id":"","method":"engine.health","params":{}})");
   require(response["error"]["code"] == "invalid_request",
           "empty request ID is rejected");
   require(response["request_id"].is_null(),
@@ -187,7 +199,7 @@ void test_invalid_envelope() {
 
 void test_invalid_identifier() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"has space","method":"engine.health","params":{}})");
+      R"({"type":"request","request_id":"has space","method":"engine.health","params":{}})");
   require(response["error"]["code"] == "invalid_request",
           "request IDs outside the documented ASCII grammar are rejected");
   require(response["request_id"].is_null(),
@@ -196,7 +208,7 @@ void test_invalid_identifier() {
 
 void test_invalid_method() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"method-format","method":"Engine.Health","params":{}})");
+      R"({"type":"request","request_id":"method-format","method":"Engine.Health","params":{}})");
   require(response["request_id"] == "method-format",
           "method validation preserves a valid request ID");
   require(response["error"]["code"] == "invalid_request",
@@ -205,14 +217,14 @@ void test_invalid_method() {
 
 void test_invalid_params() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"params-1","method":"engine.health","params":[]})");
+      R"({"type":"request","request_id":"params-1","method":"engine.health","params":[]})");
   require(response["error"]["code"] == "invalid_request",
           "non-object params are rejected");
 }
 
 void test_unknown_field() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"field-1","method":"engine.health","params":{},"future":true})");
+      R"({"type":"request","request_id":"field-1","method":"engine.health","params":{},"future":true})");
   require(response["error"]["code"] == "invalid_request",
           "unknown request fields are rejected");
   require(response["error"]["details"]["field"] == "future",
@@ -221,7 +233,7 @@ void test_unknown_field() {
 
 void test_unknown_method() {
   const auto response = handle(
-      R"({"protocol_version":1,"type":"request","request_id":"method-1","method":"robot.unknown","params":{}})");
+      R"({"type":"request","request_id":"method-1","method":"robot.unknown","params":{}})");
   require(response["request_id"] == "method-1",
           "method error preserves request ID");
   require(response["error"]["code"] == "method_not_found",
@@ -235,13 +247,13 @@ void test_unknown_method() {
 int main() {
   test_committed_examples();
   test_health();
+  test_design_calculation();
 #ifdef ROBOT_ENGINE_WITH_ROBOTICS
   test_forward_kinematics();
   test_invalid_forward_params();
 #endif
   test_invalid_json();
   test_invalid_utf8();
-  test_unsupported_version();
   test_invalid_envelope();
   test_invalid_identifier();
   test_invalid_method();

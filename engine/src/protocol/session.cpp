@@ -73,7 +73,6 @@ constexpr std::size_t kMaxRequestIdLength = 128;
     error["details"] = std::move(details);
   }
   return Json{
-      {"protocol_version", kProtocolVersion},
       {"type", "error"},
       {"request_id", std::move(request_id)},
       {"engine_version", engine_version()},
@@ -89,26 +88,14 @@ struct CancelEnvelope {
 
 [[nodiscard]] CancelEnvelope validate_cancel(const Json &message) {
   const auto request_id = request_id_or_null(message);
-  if (!message.contains("protocol_version") ||
-      !message["protocol_version"].is_number_integer()) {
-    return {"", error_response(request_id, "invalid_request",
-                               "protocol_version must be an integer.")};
-  }
-  if (message["protocol_version"] != kProtocolVersion) {
-    return {"", error_response(
-                    request_id, "unsupported_protocol_version",
-                    "The requested protocol version is not supported.", false,
-                    {{"received", message["protocol_version"]},
-                     {"supported", Json::array({kProtocolVersion})}})};
-  }
   if (request_id.is_null()) {
     return {"", error_response(nullptr, "invalid_request",
                                "request_id must be an ASCII identifier of at "
                                "most 128 bytes.")};
   }
 
-  constexpr std::array<std::string_view, 3> allowed_fields{
-      "protocol_version", "type", "request_id"};
+  constexpr std::array<std::string_view, 2> allowed_fields{"type",
+                                                           "request_id"};
   for (auto iterator = message.begin(); iterator != message.end(); ++iterator) {
     if (std::find(allowed_fields.begin(), allowed_fields.end(),
                   iterator.key()) == allowed_fields.end()) {
@@ -130,7 +117,6 @@ struct CancelEnvelope {
     progress["message"] = message;
   }
   return Json{
-      {"protocol_version", kProtocolVersion},
       {"type", "progress"},
       {"request_id", request_id},
       {"progress", std::move(progress)},
