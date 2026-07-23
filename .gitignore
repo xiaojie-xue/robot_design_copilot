@@ -8,6 +8,8 @@ node_modules/
 .pnpm-store/
 src-tauri/target/
 src-tauri/binaries/robot-engine-cli-*
+src-tauri/icons/
+src-tauri/gen/
 __pycache__/
 *.pyc
 
