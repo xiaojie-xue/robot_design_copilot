@@ -55,4 +55,6 @@ protocol failures into structured command errors. The webview receives no shell
 plugin capability, so it cannot spawn arbitrary processes or bypass the Rust
 lifecycle owner.
 
-See [ADRs](../adr/README.md) for decisions and the [roadmap](../project/roadmap.md) for delivery order.
+See [`src-tauri/`](src-tauri.md) for the file-level reference of the desktop
+shell, [ADRs](../adr/README.md) for decisions, and the [roadmap](../project/roadmap.md)
+for delivery order.

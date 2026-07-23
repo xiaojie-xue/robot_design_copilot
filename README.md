@@ -87,13 +87,14 @@ cooperative cancellation, and joins workers on shutdown. The Rust lifecycle clie
 engine process, matches concurrent requests, enforces timeouts, sends
 cancellation, and handles crash, restart, and shutdown paths. See the
 [development plan](docs/project/development-plan.md) for delivery order and the
-current work breakdown. The first C++ engine slice uses CMake 3.24+ and a
-C++20 compiler:
+current work breakdown. The first C++ engine slice uses CMake 3.22+ and a
+C++20 compiler. Configure and build with the bundled `dev` preset, then run the
+tests:
 
 ```shell
-cmake -S . -B build -DBUILD_TESTING=ON
-cmake --build build
-ctest --test-dir build --output-on-failure
+cmake --preset dev
+cmake --build --preset dev
+ctest --test-dir build/dev --output-on-failure
 ```
 
 To keep every local test artifact inside this repository, use:
@@ -133,20 +134,6 @@ real framed `engine.health` and `kinematics.forward` exchanges through the
 sidecar. The reference model is an M0 integration fixture, not a production
 robot design.
 
-The Rust toolchain, Cargo cache, temporary files, and test output can also be
-kept inside this repository:
-
-```shell
-bash scripts/setup-rust.sh
-bash scripts/test-rust-client.sh
-```
-
-The setup respects each developer's existing rustup and Cargo source settings;
-the repository does not select a registry mirror. An existing repository-local
-toolchain is reused only when it matches the pinned Rust version. A first-time
-rustup bootstrap requires `RUSTUP_DIST_SERVER` to be set by the developer. All
-Rust state and generated files remain under `build/`.
-
 The M0 desktop FK scaffold uses Tauri 2, React, and a minimum command surface.
 It is reused during M5 product packaging. The webview can request engine health,
 forward kinematics, or an engine restart, but it has no direct shell permission.
@@ -167,6 +154,14 @@ development environment:
 ```shell
 python3 scripts/stage-sidecar.py
 pnpm tauri dev
+```
+
+Icons are generated (not committed). Before the first desktop build, generate
+them from a `1024x1024` source PNG or `generate_context!()` fails on the missing
+`icon.png`:
+
+```shell
+pnpm tauri icon path/to/source.png
 ```
 
 The last command launches the bundled engine sidecar. Do not run it in process
