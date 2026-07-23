@@ -163,7 +163,7 @@ bool read_vector3(const Json &value, const std::string &path, Vector3 &output,
       }
       auto &bound = input.bounds[index];
       if (!bounds[index]["id"].is_string() ||
-          bounds[index]["id"] != ids[index]) {
+          bounds[index]["id"] != std::string(ids[index])) {
         add_issue(issues, path + "/id", "ordered_link_id_required",
                   "Link IDs must be upper_arm, forearm, wrist in order.");
       } else {
