@@ -39,7 +39,7 @@ def main() -> int:
 
     extension = ".exe" if "windows" in arguments.target else ""
     source = arguments.source or (
-        ROOT / "build" / "robotics" / "engine" / f"robot-engine-cli{extension}"
+        ROOT / "build" / "dev" / "engine" / f"robot-engine-cli{extension}"
     )
     if not source.is_file():
         raise SystemExit(

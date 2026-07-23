@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22)
 
 project(
   robot_design_copilot
@@ -48,7 +48,6 @@ if(NOT Eigen3_FOUND)
     Eigen3
     URL https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.bz2
     URL_HASH SHA256=8bb7280b7551bf06418d11a9671fdf998cb927830cf21589b394382d26779821
-    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
   )
   FetchContent_MakeAvailable(Eigen3)
 endif()
