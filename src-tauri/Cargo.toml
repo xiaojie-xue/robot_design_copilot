@@ -10,11 +10,11 @@ name = "robot_design_copilot_desktop"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
-tauri-build = "=2.6.3"
+tauri-build = { version = "=2.6.3", features = [] }
 
 [dependencies]
 robot-engine-client = { path = "../rust/engine-client" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tauri = "=2.11.5"
+tauri = { version = "=2.11.5", features = [] }
 tauri-plugin-shell = "=2.3.5"
